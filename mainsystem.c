@@ -4,8 +4,10 @@
 // Definindo endereços do Arduino
 #define ARDUINO_ADDRESS 0x08
 #define ARDUINO_PORT S2
-#define KP 1.2
-#define SET_POINT 73
+#define KP 1.8
+#define KI 0.0
+#define KD 0.2
+#define SET_POINT 65
 #define OFFSET -20
 
 /* ---------------------------------
@@ -76,9 +78,16 @@ void turn(float degrees){
 	waitUntilMotorStop(motorB);
 }
 void PID(int input){
+	// Ultimo input
+	static int lstinput;
+	// Erro acumulado
+	static float erroAc;
 	int erro = input - SET_POINT;
-	motor[motorA] = (erro * KP) + OFFSET;
-	motor[motorB] = -(erro * KP) + OFFSET;
+	float valor = (erro * KP) + (input - lstinput) * KD + (erroAc) * KI;
+	motor[motorA] = valor + OFFSET;
+	motor[motorB] = -valor + OFFSET;
+	lstinput = input;
+	erroAc += erro;
 }
 // Função principal
 task main()

@@ -54,7 +54,7 @@ void receiveData(int byteCount) {
   //função que recebe os dados
   while (Wire.available() > 0) {
     val = Wire.read();
-    Serial.println(val);
+    //Serial.println(val);
     flag = true;
   }
 }
