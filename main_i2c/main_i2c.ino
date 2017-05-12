@@ -32,11 +32,15 @@ void setup() {
 void callback() {
    //Serial.println("callback");
   if (mySerial.available()) {
-    linha[0] = mySerial.read();
-    //while (linha[0] > 127) {
-    //  linha[1] = linha[0] - 127;
+    byte leitura = mySerial.read();
+    if ((leitura > 127) && (leitura < 132)){
+      linha[1] = leitura - 127;
+    }else if (leitura < 132){
+      linha[0] = leitura;
+    }
     linha[0] = constrain(linha[0], 0, 127);
     //Serial.println(linha[0]);
+    //Serial.println(linha[1]);
     //  linha[0] = mySerial.read();
     //}
   }
@@ -91,7 +95,7 @@ void receiveData(int byteCount) {
   }*/
 void sendData() {
   //Serial.println(linha[val]);
-  Wire.write(linha[val]);
+  Wire.write(linha, 2);
   
   //
   //mySerial.flush();

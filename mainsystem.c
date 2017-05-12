@@ -13,6 +13,10 @@
 /* ---------------------------------
 ||							I2C								||
 --------------------------------- */
+//Variavel que armazena a posição do sensor de 0 a 127
+int linha;
+//Variavel que armazena o estado especial do sensor de linha
+int estado;
 // Armazena o status do sensor
 TI2CStatus mI2CStatus;
 // Armazena a resposta
@@ -21,7 +25,7 @@ byte replyMsg[10];
 byte sendMsg[10];
 
 // Mandar e receber mensagens para o I2C
-int i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte3, byte byte4){
+void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte3, byte byte4){
 	// Pegando o status do sensor I2C
 	mI2CStatus = nI2CStatus[i2c];
 	// Reservando espaço na memória para a resposta
@@ -38,16 +42,17 @@ int i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte3
 	sendMsg[5] = byte4;
 
 	// Enviando mensagem
-	sendI2CMsg(i2c, &sendMsg[0], 1);
+	sendI2CMsg(i2c, &sendMsg[0], 2);
 	// Esperar 30ms
 	wait1Msec(30);
 
 	// Ler resposta
 	readI2CReply(i2c, &replyMsg[0], reply_size);
+
 	// Resposta
-	int resp = replyMsg[0];
+	linha = replyMsg[0];
+	estado = replyMsg[1];
 	wait1Msec(35);
-	return resp;
 }
 
 
@@ -62,12 +67,14 @@ void walk(int value, float duration){
 }
 
 int read_line_sensor(){
-	int value = i2c_msg(1,1,1,0,0,0);
+	i2c_msg(2,1,1,0,0,0);
+	int value = linha;
 	return value;
 }
 
 int read_color_sensor(bool right_sensor){
 	int value = (right_sensor );
+	return 0;
 }
 
 // Faz o robô girar em graus
@@ -99,6 +106,7 @@ task main()
 		if(sensor != 127){
 			writeDebugStreamLine("CARAIO: %d", sensor);
 			PID(sensor);
+			displayBigTextLine(3, "%d", estado);
 		}
 	}
 }
