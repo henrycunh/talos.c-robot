@@ -55,7 +55,7 @@ void loop() {
   unsigned int position = qtra.readLine(sensorValues);
   byte linha[] = {map(position, 0, 7000, 0, 127), getEstado()};
   //Serial.println(linha[0]);
-  //Serial.println(linha[1]);
+  Serial.println(linha[1]);
   mySerial.write(linha, 2);
   //Serial.println(linha[0]);
   /*for (unsigned char i = 0; i < NUM_SENSORS; i++) {
@@ -71,9 +71,11 @@ byte getEstado() {
   int refDireita = qtra.calibratedMaximumOn[0] + qtra.calibratedMaximumOn[1] + qtra.calibratedMaximumOn[2] + qtra.calibratedMaximumOn[3];
   int somaEsquerda = sensorValues[4] + sensorValues[5] + sensorValues[6] + sensorValues[7];
   int refEsquerda = qtra.calibratedMaximumOn[4] + qtra.calibratedMaximumOn[5] + qtra.calibratedMaximumOn[6] + qtra.calibratedMaximumOn[7];
-  if (somaDireita > refDireita * 0.7) {
+  if ((somaDireita > refDireita * 0.6) && (somaEsquerda > refEsquerda * 0.6)) {
+    return 132;
+  } else if (somaDireita > refDireita * 0.6) {
     return 128;
-  } else if (somaEsquerda > refEsquerda * 0.7) {
+  } else if (somaEsquerda > refEsquerda * 0.6) {
     return 129;
   } else if (((sensorValues[0] < media[0]) && (sensorValues[2] < media[2])) && ((sensorValues[3] < media[3]) && (sensorValues[4] < media[4])) && ((sensorValues[5] < media[5]) && (sensorValues[7] < media[7]))) {
     return 130;

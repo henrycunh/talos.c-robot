@@ -84,17 +84,18 @@ void turn(float degrees){
 	setMotorTarget(motorB, degrees, -50);
 	waitUntilMotorStop(motorB);
 }
-void PID(int input){
+int PID(int input, int offset){
 	// Ultimo input
 	static int lstinput;
 	// Erro acumulado
 	static float erroAc;
 	int erro = input - SET_POINT;
 	float valor = (erro * KP) + (input - lstinput) * KD + (erroAc) * KI;
-	motor[motorA] = valor + OFFSET;
-	motor[motorB] = -valor + OFFSET;
+	motor[motorA] = valor + offset;
+	motor[motorB] = -valor + offset;
 	lstinput = input;
 	erroAc += erro;
+	return erro;
 }
 // Função principal
 task main()
@@ -103,10 +104,40 @@ task main()
 	//turn(90);
 	while(1){
 		int sensor = read_line_sensor();
-		if(sensor != 127){
+		if((sensor != 127) && (sensor != 0) && (estado == 4)){
 			writeDebugStreamLine("CARAIO: %d", sensor);
-			PID(sensor);
+			PID(sensor, -20);
 			displayBigTextLine(3, "%d", estado);
+		} else if(estado == 1){
+
+
+		}  else if(estado == 2){
+
+
+		} else if(estado == 3){
+			while(estado == 3){
+				motor[motorA] = 20;
+				motor[motorB] = 20;
+				read_line_sensor();
+				displayBigTextLine(3, "%d", estado);
+			}
+			if((estado == 1) || (estado == 2)){
+				continue;
+			}
+			int erro = 20;
+			while(erro > 10){
+				sensor = read_line_sensor();
+				erro = PID(sensor, 0);
+				displayBigTextLine(3, "%d", estado);
+			}
+			walk(20, 10);
+			read_line_sensor();
+			while(estado == 3){
+				motor[motorA] = -20;
+				motor[motorB] = -20;
+				read_line_sensor();
+				displayBigTextLine(3, "%d", estado);
+			}
 		}
 	}
 }
