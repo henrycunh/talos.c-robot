@@ -9,9 +9,10 @@
 #define KD 0.2
 #define SET_POINT 65
 #define OFFSET -15
-#define TURN_RATE_90 60
-#define TURN_TIME_90 100
+#define TURN_RATE_90 70
+#define TURN_TIME_90 50
 #define TURN_SPEED_90 30
+#define G_THRES 2.6
 
 /* ---------------------------------
 ||						UTILS								||
@@ -87,8 +88,24 @@ int read_line_sensor(){
 }
 
 // Lê o valor dos sensores de cor
-int read_color_sensor(bool right_sensor){
-	int value = (right_sensor);
+int read_color_sensor(){
+	long cores[3];
+	/*getColorRGB(colorA, cores[0], cores[1], cores[2]);
+
+	//Write the values to the Debug Stream
+	displayCenteredBigTextLine(1,"Vermelho: %d", cores[0]);
+	displayCenteredBigTextLine(4,"Verde: %d", cores[1]);
+	displayCenteredBigTextLine(7,"Azul: %d", cores[2]);*/
+	if(getColorName(colorB) == colorGreen){
+		eraseDisplay();
+		displayCenteredBigTextLine(1, "VIRAR ESQUERDA VERDE");
+		return 1;
+	}
+	if(getColorName(colorA) == colorGreen){
+		eraseDisplay();
+		displayCenteredBigTextLine(1, "VIRAR DIREITA VERDE");
+		return 2;
+	}
 	return 0;
 }
 
@@ -129,25 +146,20 @@ int PID(int input, int offset){
 // GAP
 
 void GAP(){
-	while(estado == 3){
+	/*while(estado == 3){
 		motor[motorA] = 20;
 		motor[motorB] = 20;
 		read_line_sensor();
 		displayBigTextLine(3, "%d", estado);
 	}
 	//int erro = 20;
-	/*while(erro > 10){
-			sensor = read_line_sensor();
-			erro = PID(sensor, 0);
-			displayBigTextLine(3, "%d", estado);
-		}*/
-	walk(20, 300);
+	walk(20, 300);*/
 	read_line_sensor();
 	while(estado == 3){
 		motor[motorA] = -20;
 		motor[motorB] = -20;
 		read_line_sensor();
-		displayBigTextLine(3, "%d", estado);
+		displayBigTextLine(10, "%d", estado);
 	}
 }
 
@@ -159,44 +171,23 @@ void corrigir(int limiar){
 	}
 }
 
-// Virar 90°
-void turn90(bool esquerda){
-	int sensor;
-	if(esquerda){
-		// 90° ESQUERDA
-		walk(TURN_SPEED_90, TURN_TIME_90);
-		// Ler estado atual
-		sensor = read_line_sensor();
-		// Checando por encruzilhadas
-		if(estado == 4)
-			continue;
-		// Checando se é uma curva de 90° ou mais
-		else if(estado == 3){
-			//Vira 90° à esquerda
-			turn(TURN_RATE_90, false);
-			//Anda para frente
-			walk(TURN_SPEED_90, TURN_TIME_90/2);
-			corrigir(8);
-			continue;
+// Virada Genérica por erro
+void gTurn(bool direction){
+	int erro = read_line_sensor() - SET_POINT;
+
+	while((erro > 5) || (erro < -5)){
+		displayBigTextLine(10, "Erro: %d", erro);
+		if(direction){
+			motor[motorA] = -30;
+			motor[motorB] = 30;
+		} else {
+			motor[motorA] = 30;
+			motor[motorB] = -30;
 		}
-	} else {
-		// 90° DIREITA
-		walk(TURN_SPEED_90, TURN_TIME_90);
-		// Ler estado atual
-		sensor = read_line_sensor();
-		// Checando por encruzilhadas
-		if(estado == 4)
-			continue;
-		// Checando se é uma curva de 90° ou mais
-		else if(estado == 3){
-			//Vira 90° à esquerda
-			turn(TURN_RATE_90, true);
-			//Anda para frente
-			walk(TURN_SPEED_90, TURN_TIME_90/2);
-			corrigir(8);
-			continue;
-		}
+
+		erro = read_line_sensor() - SET_POINT;
 	}
+
 }
 
 /* ---------------------------------
@@ -207,27 +198,61 @@ task main()
 
 	while(1){
 		int sensor = read_line_sensor();
+		int cor = read_color_sensor();
+		if(cor == 1){
+			gTurn(true);
+			continue;
+		}else if(cor == 2){
+			gTurn(false);
+			continue;
+		}
 		if((sensor != 127) && (sensor != 0)){
 			writeDebugStreamLine("CARAIO: %d", sensor);
 			PID(sensor, -20);
-			displayBigTextLine(3, "%d", estado);
-			} else if(estado == 1){
-				turn90(true);
-			}  else if(estado == 2){
-				turn90(false);
+			displayBigTextLine(10, "%d", estado);
+		}
+		if(estado == 1){
+			displayBigTextLine(10, "90 ESQUERDA %d", estado);
+			// 90° ESQUERDA
+			walk(TURN_SPEED_90, TURN_TIME_90);
+			// Ler estado atual
+			sensor = read_line_sensor();
+			// Checando por encruzilhadas
+			if(estado == 4)
+				continue;
+			// Checando se é uma curva de 90° ou mais
+			else if(estado == 3){
+				//Vira 90° à esquerda
+				gTurn(true);
+				//Anda para frente
+				walk(TURN_SPEED_90, TURN_TIME_90/4);
+				corrigir(8);
+				continue;
 			}
-		} else if(estado == 3){
-			// GAP
+		}
+		if(estado == 2){
+			displayBigTextLine(10, "90 DIREITA %d", estado);
+			// 90° DIREITA
+			walk(TURN_SPEED_90, TURN_TIME_90);
+			// Ler estado atual
+			sensor = read_line_sensor();
+			// Checando por encruzilhadas
+			if(estado == 4)
+				continue;
+			// Checando se é uma curva de 90° ou mais
+			else if(estado == 3){
+				//Vira 90° à direita
+				gTurn(false);
+				//Anda para frente
+				walk(TURN_SPEED_90, TURN_TIME_90/2);
+				corrigir(8);
+				continue;
+			}
+		}
+		if(estado == 3){
 			GAP();
 		}
 	}
+
 }
 
-
-/*
-long cores[3];
-getColorRGB(colorA, cores[0], cores[1], cores[2]);
-
-//Write the values to the Debug Stream
-writeDebugStreamLine("Colour detected: %d, %d, %d", cores[0], cores[1], cores[2]);
-sleep(100);*/
