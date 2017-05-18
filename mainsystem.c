@@ -126,6 +126,31 @@ int PID(int input, int offset){
 	return erro;
 }
 
+// GAP
+
+void GAP(){
+	while(estado == 3){
+		motor[motorA] = 20;
+		motor[motorB] = 20;
+		read_line_sensor();
+		displayBigTextLine(3, "%d", estado);
+	}
+	//int erro = 20;
+	/*while(erro > 10){
+			sensor = read_line_sensor();
+			erro = PID(sensor, 0);
+			displayBigTextLine(3, "%d", estado);
+		}*/
+	walk(20, 300);
+	read_line_sensor();
+	while(estado == 3){
+		motor[motorA] = -20;
+		motor[motorB] = -20;
+		read_line_sensor();
+		displayBigTextLine(3, "%d", estado);
+	}
+}
+
 // Corrigir
 void corrigir(int limiar){
 	int erro = read_line_sensor() - SET_POINT;
@@ -179,9 +204,10 @@ void turn90(bool esquerda){
 --------------------------------- */
 task main()
 {
+
 	while(1){
 		int sensor = read_line_sensor();
-		if((sensor != 127) && (sensor != 0) && (estado == 4)){
+		if((sensor != 127) && (sensor != 0)){
 			writeDebugStreamLine("CARAIO: %d", sensor);
 			PID(sensor, -20);
 			displayBigTextLine(3, "%d", estado);
@@ -189,9 +215,11 @@ task main()
 				turn90(true);
 			}  else if(estado == 2){
 				turn90(false);
-			} else if(estado == 3){
-				continue;
 			}
+		} else if(estado == 3){
+			// GAP
+			GAP();
+		}
 	}
 }
 
