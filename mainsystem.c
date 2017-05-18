@@ -69,9 +69,11 @@ void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte
 --------------------------------- */
 // Faz o robô andar para frente
 void walk(int value, float duration){
-	motor[motorA] = -value;
-	motor[motorB] = -value;
-	sleep((int)duration*100);
+	int a = getMotorEncoder(motorA);
+	while(getMotorEncoder(motorA) + duration > a){
+		motor[motorA] = -value;
+		motor[motorB] = -value;
+	}
 }
 
 int read_line_sensor(){
@@ -122,6 +124,31 @@ int PID(int input, int offset){
 	return erro;
 }
 
+// GAP
+
+void GAP(){
+	while(estado == 3){
+		motor[motorA] = 20;
+		motor[motorB] = 20;
+		read_line_sensor();
+		displayBigTextLine(3, "%d", estado);
+	}
+	//int erro = 20;
+	/*while(erro > 10){
+			sensor = read_line_sensor();
+			erro = PID(sensor, 0);
+			displayBigTextLine(3, "%d", estado);
+		}*/
+	walk(20, 300);
+	read_line_sensor();
+	while(estado == 3){
+		motor[motorA] = -20;
+		motor[motorB] = -20;
+		read_line_sensor();
+		displayBigTextLine(3, "%d", estado);
+	}
+}
+
 // Corrigir
 void corrigir(int limiar){
 	int erro = read_line_sensor() - SET_POINT;
@@ -133,71 +160,16 @@ void corrigir(int limiar){
 task main()
 {
 
-	//turn(180, true);
+	//walk(100, 20);
 	while(1){
 		int sensor = read_line_sensor();
-		if((sensor != 127) && (sensor != 0) && (estado == 4)){
+		if((sensor != 127) && (sensor != 0)){
 			writeDebugStreamLine("CARAIO: %d", sensor);
 			PID(sensor, -20);
 			displayBigTextLine(3, "%d", estado);
-		} else if(estado == 1){
-			// 90° ESQUERDA
-			walk(30, 4);
-			// Ler estado atual
-			sensor = read_line_sensor();
-			//se o estado for 4 então é uma encruzilhada
-			if(estado == 4)
-				continue;
-			//senão é uma curva de 90° ou mais
-			else if(estado == 3){
-				//Vira 90° à esquerda
-				turn(TURN_RATE_90, false);
-				//Anda para frente
-				walk(TURN_SPEED_90, TURN_TIME_90/2);
-				corrigir(8);
-				continue;
-			}
-		}  else if(estado == 2){
-			// 90° ESQUERDA
-			walk(TURN_SPEED_90, TURN_TIME_90);
-			// Ler estado atual
-			sensor = read_line_sensor();
-			//se o estado for 4 então é uma encruzilhada
-			if(estado == 4)
-				continue;
-			//senão é uma curva de 90° ou mais
-			else if(estado == 3){
-				//Vira 90° à direita
-				turn(TURN_RATE_90, true);
-				//Anda para frente
-				walk(TURN_SPEED_90, TURN_TIME_90/2);
-				corrigir(8);
-				continue;
-			}
 		} else if(estado == 3){
-			while(estado == 3){
-				motor[motorA] = 20;
-				motor[motorB] = 20;
-				read_line_sensor();
-				displayBigTextLine(3, "%d", estado);
-			}
-			if((estado == 1) || (estado == 2)){
-				continue;
-			}
-			int erro = 20;
-			while(erro > 10){
-				sensor = read_line_sensor();
-				erro = PID(sensor, 0);
-				displayBigTextLine(3, "%d", estado);
-			}
-			walk(20, 10);
-			read_line_sensor();
-			while(estado == 3){
-				motor[motorA] = -20;
-				motor[motorB] = -20;
-				read_line_sensor();
-				displayBigTextLine(3, "%d", estado);
-			}
+			// GAP
+			GAP();
 		}
 	}
 }
