@@ -10,7 +10,7 @@
 #define SET_POINT 65
 #define OFFSET -22
 #define TURN_RATE_90 70
-#define TURN_TIME_90 65
+#define TURN_TIME_90 80
 #define TURN_SPEED_90 30
 #define G_THRES 2.6
 #define TURN_ERRO_K 3
@@ -230,7 +230,7 @@ task main()
 				//Vira 90° à esquerda
 				gTurn(true);
 				//Anda para frente
-				walk(TURN_SPEED_90, TURN_TIME_90/4);
+				walk(TURN_SPEED_90, TURN_TIME_90/8);
 				corrigir(8);
 				continue;
 			}
@@ -249,7 +249,7 @@ task main()
 				//Vira 90° à direita
 				gTurn(false);
 				//Anda para frente
-				walk(TURN_SPEED_90, TURN_TIME_90/3);
+				walk(TURN_SPEED_90, TURN_TIME_90/8);
 				corrigir(8);
 				continue;
 			}
