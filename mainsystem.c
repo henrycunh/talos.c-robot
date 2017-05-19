@@ -1,7 +1,7 @@
 #pragma config(Sensor, S1,     colorA,         sensorEV3_Color, modeEV3Color_Color)
 #pragma config(Sensor, S2,     i2c,            sensorEV3_GenericI2C)
 #pragma config(Sensor, S4,     colorB,         sensorEV3_Color, modeEV3Color_Color)
-// Definindo endereÃ§os do Arduino
+// Definindo endereços do Arduino
 #define ARDUINO_ADDRESS 0x08
 #define ARDUINO_PORT S2
 #define KP 1.8
@@ -10,9 +10,10 @@
 #define SET_POINT 65
 #define OFFSET -15
 #define TURN_RATE_90 70
-#define TURN_TIME_90 50
+#define TURN_TIME_90 65
 #define TURN_SPEED_90 30
 #define G_THRES 2.6
+#define TURN_ERRO_K 3
 
 /* ---------------------------------
 ||						UTILS								||
@@ -174,8 +175,7 @@ void corrigir(int limiar){
 // Virada Genérica por erro
 void gTurn(bool direction){
 	int erro = read_line_sensor() - SET_POINT;
-
-	while((erro > 5) || (erro < -5)){
+	while((erro > TURN_ERRO_K) || (erro < -TURN_ERRO_K)){
 		displayBigTextLine(10, "Erro: %d", erro);
 		if(direction){
 			motor[motorA] = -30;
@@ -199,16 +199,17 @@ task main()
 	while(1){
 		int sensor = read_line_sensor();
 		int cor = read_color_sensor();
+		// Detectando cor
 		if(cor == 1){
 			gTurn(true);
-			continue;
+			break;
 		}else if(cor == 2){
 			gTurn(false);
-			continue;
+			break;
 		}
+
 		if((sensor != 127) && (sensor != 0)){
-			writeDebugStreamLine("CARAIO: %d", sensor);
-			PID(sensor, -20);
+			PID(sensor, OFFSET);
 			displayBigTextLine(10, "%d", estado);
 		}
 		if(estado == 1){
@@ -244,7 +245,7 @@ task main()
 				//Vira 90° à direita
 				gTurn(false);
 				//Anda para frente
-				walk(TURN_SPEED_90, TURN_TIME_90/2);
+				walk(TURN_SPEED_90, TURN_TIME_90/3);
 				corrigir(8);
 				continue;
 			}
@@ -255,4 +256,3 @@ task main()
 	}
 
 }
-
