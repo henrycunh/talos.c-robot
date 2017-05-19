@@ -8,7 +8,7 @@
 #define KI 0.0
 #define KD 0.2
 #define SET_POINT 65
-#define OFFSET -15
+#define OFFSET -22
 #define TURN_RATE_90 70
 #define TURN_TIME_90 65
 #define TURN_SPEED_90 30
@@ -190,6 +190,12 @@ void gTurn(bool direction){
 
 }
 
+//Virada do Verde
+void greenTurn(bool side){
+	walk(TURN_SPEED_90, TURN_TIME_90);
+	turn(60, side);
+	walk(TURN_SPEED_90, TURN_TIME_90);
+}
 /* ---------------------------------
 ||						  MAIN	    				||
 --------------------------------- */
@@ -201,11 +207,9 @@ task main()
 		int cor = read_color_sensor();
 		// Detectando cor
 		if(cor == 1){
-			gTurn(true);
-			break;
+			greenTurn(false);
 		}else if(cor == 2){
-			gTurn(false);
-			break;
+			greenTurn(true);
 		}
 
 		if((sensor != 127) && (sensor != 0)){
