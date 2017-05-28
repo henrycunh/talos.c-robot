@@ -16,6 +16,7 @@ byte trans = 200;
 byte aux;
 byte estado;
 uint8_t linha[] = {0, 0, 0, 0, 0, 0, 0, 0};
+int buffer[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 void setup() {
   Serial.begin(9600);
@@ -29,19 +30,23 @@ void setup() {
   //pinMode(13, OUTPUT);  
   //digitalWrite(13, LOW);
 
-}
+} 
 
 
 void callback() {
   if(resgate){
     if (Serial.available()){
-      //String tipo = Serial.readString();
-      linha[1] = Serial.read();
-      Serial.print(Serial.read());
+      
+      buffer[0] = Serial.read();
+      Serial.print("[0]"); 
+      Serial.println(buffer[0]);
+      buffer[1] = Serial.read();
+      Serial.print("[1]"); 
+      Serial.println(buffer[1]);
     }
   }
   else{
-     //Serial.println("callback");
+     //Serial.println("callback");              
     if (mySerial.available()) {
       byte leitura = mySerial.read();
       if ((leitura > 127) && (leitura < 132)){
