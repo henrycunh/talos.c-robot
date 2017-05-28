@@ -10,6 +10,7 @@ SoftwareSerial mySerial(7, 6);
 
 
 byte val = 0;
+bool resgate = false;
 bool flag = false;
 byte trans = 200;
 byte aux;
@@ -17,7 +18,7 @@ byte estado;
 uint8_t linha[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 void setup() {
-  //Serial.begin(9600);
+  Serial.begin(9600);
   Wire.begin(SLAVE_ADDRESS); //Inicia a comunicação I2C
   Wire.onReceive(receiveData); //Define a função que irá receber os dados do EV3
   Wire.onRequest(sendData); //Define a função que enviará os dados sob requisito do EV3
@@ -30,19 +31,32 @@ void setup() {
 
 
 void callback() {
-   //Serial.println("callback");
-  if (mySerial.available()) {
-    byte leitura = mySerial.read();
-    if ((leitura > 127) && (leitura < 132)){
-      linha[1] = leitura - 127;
-    }else if (leitura < 132){
-      linha[0] = leitura;
+  if(resgate){
+    if (Serial.available()){
+      String tipo = Serial.readString();
+      if(tipo == "hei"){
+        linha[0] = Serial.read();
+      }else if(tipo == "wei"){
+       linha[1] = Serial.read();   
+      }
     }
-    linha[0] = constrain(linha[0], 0, 127);
-    //Serial.println(linha[0]);
-    //Serial.println(linha[1]);
-    //  linha[0] = mySerial.read();
-    //}
+  }
+  else{
+     //Serial.println("callback");
+    if (mySerial.available()) {
+      byte leitura = mySerial.read();
+      if ((leitura > 127) && (leitura < 132)){
+        linha[1] = leitura - 127;
+      }else if (leitura < 132){
+        linha[0] = leitura;
+      }
+      linha[0] = constrain(linha[0], 0, 127);
+      //Serial.println(linha[0]);
+      //Serial.println(linha[1]);
+      //  linha[0] = mySerial.read();
+      //}
+    }
+  
   }
 
 }
@@ -58,6 +72,9 @@ void receiveData(int byteCount) {
   //função que recebe os dados
   while (Wire.available() > 0) {
     val = Wire.read();
+    if(val == 7){
+      resgate = true;
+    }
     //Serial.println(val);
     flag = true;
   }
