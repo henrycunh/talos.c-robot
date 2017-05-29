@@ -10,7 +10,7 @@ SoftwareSerial mySerial(7, 6);
 
 
 byte val = 0;
-bool resgate = false;
+bool resgate = true;
 bool flag = false;
 byte trans = 200;
 byte aux;
@@ -26,6 +26,8 @@ void setup() {
   Timer1.attachInterrupt(callback); // Configura a função callback() como a função para ser chamada a cada interrupção do Timer1
   mySerial.begin(115200); //Inicia a porta do tipo SoftwareSerial
   mySerial.setTimeout(500);
+  //pinMode(13, OUTPUT);  
+  //digitalWrite(13, LOW);
 
 }
 
@@ -33,12 +35,9 @@ void setup() {
 void callback() {
   if(resgate){
     if (Serial.available()){
-      String tipo = Serial.readString();
-      if(tipo == "hei"){
-        linha[0] = Serial.read();
-      }else if(tipo == "wei"){
-       linha[1] = Serial.read();   
-      }
+      //String tipo = Serial.readString();
+      linha[1] = Serial.read();
+      Serial.print(Serial.read());
     }
   }
   else{
@@ -71,8 +70,11 @@ void loop() {
 void receiveData(int byteCount) {
   //função que recebe os dados
   while (Wire.available() > 0) {
+    
     val = Wire.read();
-    if(val == 7){
+    //Serial.println(val);
+    if(val == 13){
+      //digitalWrite(13, HIGH);
       resgate = true;
     }
     //Serial.println(val);

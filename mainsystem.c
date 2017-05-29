@@ -202,7 +202,7 @@ void greenTurn(bool side){
 task main()
 {
 
-	while(1){
+	while(0){
 		int sensor = read_line_sensor();
 		int cor = read_color_sensor();
 		// Detectando cor
@@ -265,6 +265,10 @@ task main()
 		if(estado == 3){
 			GAP();
 		}
+	}
+	// Código resgate
+	while(1){
+		int sensor = read_line_sensor();
 	}
 
 }
