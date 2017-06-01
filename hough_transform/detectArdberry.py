@@ -9,7 +9,7 @@ import numpy as np
 width = 320
 height = 240
 # PORTA SERIAL
-ser = serial.Serial('/dev/ttyACM0', 9600)
+ser = serial.Serial('/dev/ttyACM2', 9600)
 # INICIALIZAÇÃO DA CAMERA
 camera = PiCamera()
 camera.resolution = (width, height)
@@ -50,7 +50,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         imgg = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         clahe = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(8,8))
         img2 = clahe.apply(imgg)
-        img2 = cv2.medianBlur(img2,3)
+        img2 = cv2.medianBlur(img2,1)
         cimg = cv2.cvtColor(imgg,cv2.COLOR_GRAY2BGR)
         # HOUGH TRANSFORM [PARAMS]
         circles = cv2.HoughCircles(img2, cv2.HOUGH_GRADIENT, 1, 10, param1=200, param2=30, minRadius=0, maxRadius=100)
@@ -65,22 +65,28 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                 wlimitm = 0
                 cv2.imshow('resultstream', img2)
                 cv2.imshow('resultstream1', imgg)
+                try:
+                        valx = bytes([int(0)])
+                        ser.write(valx)
+                        print (valx)
+                        #ser.write(i[0])
+                        time.sleep(0.05)
+                except ser.SerialTimeoutException:
+                        print('Data could not be read')
+                        time.sleep(0.05)
                 if inic < minim:
                         inic = 100
                         continue
                 else:
                         inic -= 12
                         continue
+                
         lhf = 1000
         # CASO ENCONTRE CIRCULOS
         a = 0
         for i in circles[0,:]:
                lh = (127*i[0])/height
                lw = (127*i[1])/width
-               hlimitM = lh + 5 
-               hlimitm = lh - 5
-               wlimitM = lw + 5 
-               wlimitm = lw - 5
                if lh < lhf :
                        i0 = i[0]
                        i1 = i[1]
