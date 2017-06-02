@@ -16,6 +16,7 @@ byte trans = 200;
 byte aux;
 byte estado;
 uint8_t linha[] = {0, 0, 0, 0, 0, 0, 0, 0};
+int buffer[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 void setup() {
   //Serial.begin(9600);
@@ -29,19 +30,23 @@ void setup() {
   //pinMode(13, OUTPUT);  
   //digitalWrite(13, LOW);
 
-}
+} 
 
 
 void callback() {
   if(resgate){
     if (Serial.available()){
-      //String tipo = Serial.readString();
-      linha[1] = Serial.read();
-      Serial.print(Serial.read());
+      
+      buffer[0] = Serial.read();
+      Serial.print("[0]"); 
+      Serial.println(buffer[0]);
+      buffer[1] = Serial.read();
+      Serial.print("[1]"); 
+      Serial.println(buffer[1]);
     }
   }
   else{
-     //Serial.println("callback");
+     //Serial.println("callback");              
     if (mySerial.available()) {
       byte leitura = mySerial.read();
       if ((leitura > 127) && (leitura < 132)){
@@ -114,8 +119,14 @@ void receiveData(int byteCount) {
 
   }*/
 void sendData() {
+<<<<<<< HEAD
   //Serial.println(linha[val]);
   //Serial.println("q");
+=======
+  linha[0] = constrain(buffer[0],0,127);
+  Serial.print("Wire:");
+  Serial.println(linha[0]);
+>>>>>>> b8a6118fe4124e8a3d9ea92e04252f3d6b1ef6f5
   Wire.write(linha, 2);
   
   //

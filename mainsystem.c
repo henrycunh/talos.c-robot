@@ -7,18 +7,22 @@
 // Definindo endereços do Arduino
 #define ARDUINO_ADDRESS 0x08
 #define ARDUINO_PORT S2
-#define KP 2
+#define KP 1.8
 #define KI 0.0
 #define KD 0.2
 #define SET_POINT 65
 #define OFFSET -22
 #define TURN_RATE_90 70
-#define TURN_TIME_90 80
+#define TURN_TIME_90 60
 #define TURN_SPEED_90 30
-#define G_THRES 2.6
+#define G_THRESH 2.6
 #define TURN_ERRO_K 4
 #define IMAGE_KP 0.2
 #define IMAGE_SETPOINT 47
+#define COLOR_ERRO 6
+
+bool resgate = false;
+int WHITE_THRESH = 30;
 
 /* ---------------------------------
 ||						UTILS								||
@@ -26,6 +30,20 @@
 // Realiza mudança na magnitude
 long map( long x, long in_min, long in_max, long out_min, long out_max){
 	return (x - in_min) * ( out_max - out_min) / ( in_max - in_min ) + out_min ;
+}
+// Pega o maior de três números
+int max(int a, int b, int c){
+     int m = a;
+     (m < b) && (m = b);
+     (m < c) && (m = c);
+     return m;
+}
+// Pega o menor de três números
+int min(int a, int b, int c){
+     int m = a;
+     (m > b) && (m = b);
+     (m > c) && (m = c);
+     return m;
 }
 
 /* ---------------------------------
@@ -102,25 +120,55 @@ int read_line_sensor(){
 	return value;
 }
 
+
+// Calibra o threshold de branco e preto
+void calibrateThresh(){
+	// Calibração do branco
+	while(!getButtonPress(buttonEnter)){
+		// Pegando cores do sensor esquerdo
+		long coresB[3];
+		getColorRGB(colorB, coresB[0], coresB[1], coresB[2]);
+		// Pegando cores do sensor direito
+		long coresA[3];
+		getColorRGB(colorA, coresA[0], coresA[1], coresA[2]);
+
+		displayTextLine(1, "CALIBRANDO O BRANCO");
+		displayTextLine(4, "E => (R:%d, G:%d, B:%d)", coresB[0], coresB[1], coresB[2]);
+		displayTextLine(7, "D => (R:%d, G:%d, B:%d)", coresA[0], coresA[1], coresA[2]);
+
+		int lowestA = min(coresA[0],coresA[1],coresA[2]);
+		int lowestB = min(coresB[0],coresB[1],coresB[2]);
+		WHITE_THRESH = (lowestA < lowestB ? lowestA : lowestB);
+	}
+}
+
 // Lê o valor dos sensores de cor
 int read_color_sensor(){
-	long cores[3];
-	/*getColorRGB(colorA, cores[0], cores[1], cores[2]);
-
-	//Write the values to the Debug Stream
-	displayCenteredBigTextLine(1,"Vermelho: %d", cores[0]);
-	displayCenteredBigTextLine(4,"Verde: %d", cores[1]);
-	displayCenteredBigTextLine(7,"Azul: %d", cores[2]);*/
-	if(getColorName(colorB) == colorGreen){
-		eraseDisplay();
-		displayCenteredBigTextLine(1, "VIRAR ESQUERDA VERDE");
+	// Pegando cores do sensor esquerdo
+	long coresB[3];
+	getColorRGB(colorB, coresB[0], coresB[1], coresB[2]);
+	// Pegando cores do sensor direito
+	long coresA[3];
+	getColorRGB(colorA, coresA[0], coresA[1], coresA[2]);
+	// Escreve os valores na tela
+	displayCenteredBigTextLine(1,"Vermelho: %d %d", coresA[0], coresB[0]);
+	displayCenteredBigTextLine(4,"Verde: %d %d", coresA[1], coresB[1]);
+	displayCenteredBigTextLine(7,"Azul: %d %d", coresA[2], coresB[2]);
+	// Detecta se o valor do verde passa de certo limiar
+	int whiteErro = WHITE_THRESH + COLOR_ERRO;
+	// Esquerda
+	if(coresB[0] < whiteErro && coresB[1] < whiteErro && coresB[2] < whiteErro &&
+		coresB[1] > cores[0] * G_THRESH && coresB[1] > coresB[2] * G_THRESH){
+		displayCenteredBigTextLine(10,"GREEN TURN ESQUERDO");
 		return 1;
 	}
-	if(getColorName(colorA) == colorGreen){
-		eraseDisplay();
-		displayCenteredBigTextLine(1, "VIRAR DIREITA VERDE");
+	// Direita
+	if(coresA[0] < whiteErro && coresA[1] < whiteErro && coresA[2] < whiteErro &&
+		coresA[1] > cores[0] * G_THRESH && coresA[1] > coresA[2] * G_THRESH){
+		displayCenteredBigTextLine(10,"GREEN TURN DIREITO");
 		return 2;
 	}
+
 	return 0;
 }
 
@@ -159,16 +207,7 @@ int PID(int input, int offset, int KP1, int SET_POINT1){
 }
 
 // GAP
-
 void GAP(){
-	/*while(estado == 3){
-		motor[motorA] = 20;
-		motor[motorB] = 20;
-		read_line_sensor();
-		displayBigTextLine(3, "%d", estado);
-	}
-	//int erro = 20;
-	walk(20, 300);*/
 	read_line_sensor();
 	while(estado == 3){
 
@@ -234,6 +273,11 @@ task main()
 			greenTurn(false);
 			walk(-TURN_SPEED_90, TURN_TIME_90*4);
 		}
+/**
+* LINE FOLLOWING
+*/
+void lineFollowing(){
+	while(1){
 		int sensor = read_line_sensor();
 		int cor = read_color_sensor();
 		// Detectando cor
@@ -317,5 +361,30 @@ task main()
 		}
 		wait1Msec(300);
 	}
+=======
+}
 
+/**
+* RESGASTE
+*/
+void resgateMode(){
+
+}
+>>>>>>> b8a6118fe4124e8a3d9ea92e04252f3d6b1ef6f5
+
+
+/* ---------------------------------
+||						  MAIN	    				||
+--------------------------------- */
+task main()
+{
+	calibrateThresh();
+	while(1){
+		if(!resgate){
+			eraseDisplay();
+			lineFollowing();
+		}
+		else
+			resgateMode();
+		}
 }
