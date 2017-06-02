@@ -157,14 +157,12 @@ int read_color_sensor(){
 	// Detecta se o valor do verde passa de certo limiar
 	int whiteErro = WHITE_THRESH + COLOR_ERRO;
 	// Esquerda
-	if(coresB[0] < whiteErro && coresB[1] < whiteErro && coresB[2] < whiteErro &&
-		coresB[1] > cores[0] * G_THRESH && coresB[1] > coresB[2] * G_THRESH){
+	if(coresB[0] < whiteErro && coresB[1] < whiteErro && coresB[2] < whiteErro && coresB[1] > coresB[0] * G_THRESH && coresB[1] > coresB[2] * G_THRESH){
 		displayCenteredBigTextLine(10,"GREEN TURN ESQUERDO");
 		return 1;
 	}
 	// Direita
-	if(coresA[0] < whiteErro && coresA[1] < whiteErro && coresA[2] < whiteErro &&
-		coresA[1] > cores[0] * G_THRESH && coresA[1] > coresA[2] * G_THRESH){
+	if(coresA[0] < whiteErro && coresA[1] < whiteErro && coresA[2] < whiteErro && coresA[1] > coresA[0] * G_THRESH && coresA[1] > coresA[2] * G_THRESH){
 		displayCenteredBigTextLine(10,"GREEN TURN DIREITO");
 		return 2;
 	}
@@ -250,12 +248,10 @@ void greenTurn(bool side){
 	walk(TURN_SPEED_90, TURN_TIME_90/2);
 }
 
-/* ---------------------------------
-||						  MAIN	    				||
---------------------------------- */
-task main()
-{
-
+/**
+* LINE FOLLOWING
+*/
+void lineFollowing(){
 	while(1){
 		if(getIRDistance(infraR)<20){
 			greenTurn(false);
@@ -273,11 +269,6 @@ task main()
 			greenTurn(false);
 			walk(-TURN_SPEED_90, TURN_TIME_90*4);
 		}
-/**
-* LINE FOLLOWING
-*/
-void lineFollowing(){
-	while(1){
 		int sensor = read_line_sensor();
 		int cor = read_color_sensor();
 		// Detectando cor
@@ -341,36 +332,32 @@ void lineFollowing(){
 			GAP();
 		}
 	}
-	// Código resgate
-	while(0){
-		linha = read_line_sensor();
-		//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
-		if(linha == 0){
-			motor[motorA] = 5;
-			motor[motorB] = -5;
-		}else{
-			if ((linha <= 100 + 5) && (linha >= 100 - 5)){
-				walk(10, 1);
-			}else if (linha > 100){
-				motor[motorA] = 5;
-				motor[motorB] = -5;
-			}else{
-				motor[motorA] = -5;
-				motor[motorB] = 5;
-			}
-		}
-		wait1Msec(300);
-	}
-=======
 }
 
 /**
 * RESGASTE
 */
 void resgateMode(){
-
+	while(1){
+			linha = read_line_sensor();
+			//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
+			if(linha == 0){
+				motor[motorA] = 5;
+				motor[motorB] = -5;
+			}else{
+				if ((linha <= 100 + 5) && (linha >= 100 - 5)){
+					walk(10, 1);
+				}else if (linha > 100){
+					motor[motorA] = 5;
+					motor[motorB] = -5;
+				}else{
+					motor[motorA] = -5;
+					motor[motorB] = 5;
+				}
+			}
+			wait1Msec(300);
+	}
 }
->>>>>>> b8a6118fe4124e8a3d9ea92e04252f3d6b1ef6f5
 
 
 /* ---------------------------------
