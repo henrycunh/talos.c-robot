@@ -10,7 +10,7 @@ SoftwareSerial mySerial(7, 6);
 
 
 byte val = 0;
-bool resgate = true;
+bool resgate = false;
 bool flag = false;
 byte trans = 200;
 byte aux;
@@ -18,7 +18,7 @@ byte estado;
 uint8_t linha[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 void setup() {
-  Serial.begin(9600);
+  //Serial.begin(9600);
   Wire.begin(SLAVE_ADDRESS); //Inicia a comunicação I2C
   Wire.onReceive(receiveData); //Define a função que irá receber os dados do EV3
   Wire.onRequest(sendData); //Define a função que enviará os dados sob requisito do EV3
@@ -50,6 +50,7 @@ void callback() {
         linha[0] = leitura;
       }
       linha[0] = constrain(linha[0], 0, 127);
+      //Serial.println(linha[0]);
       //Serial.println(linha[0]);
       //Serial.println(linha[1]);
       //  linha[0] = mySerial.read();
@@ -114,6 +115,7 @@ void receiveData(int byteCount) {
   }*/
 void sendData() {
   //Serial.println(linha[val]);
+  //Serial.println("q");
   Wire.write(linha, 2);
   
   //
