@@ -134,37 +134,7 @@ void greenTurn(bool side){
 	turn(60, side);
 	walk(TURN_SPEED_90, TURN_TIME_90/2);
 }
-// Faz o robô andar para frente procurando o verde
-void walkGreen(int value, float duration){
-	resetMotorEncoder(motorA);
-	int a = getMotorEncoder(motorA);
-	if(value > 0){
 
-		while(getMotorEncoder(motorA) + duration > a){
-			int cor = read_color_sensor();
-			if(cor == 1){
-				greenTurn(false);
-			}
-			else if(cor == 2){
-				greenTurn(true);
-			}
-			motor[motorA] = -value;
-			motor[motorB] = -value;
-		}
-	}else{
-		while(getMotorEncoder(motorA) - duration < a){
-			int cor = read_color_sensor();
-			if(cor == 1){
-				greenTurn(false);
-			}
-			else if(cor == 2){
-				greenTurn(true);
-			}
-			motor[motorA] = -value;
-			motor[motorB] = -value;
-		}
-	}
-}
 // Lê os valores e estado do QTR8-A
 int read_line_sensor(){
 	i2c_msg(2,1,1,0,0,0);
@@ -210,16 +180,14 @@ int read_color_sensor(){
 	displayCenteredBigTextLine(7,"Azul: %d %d", coresA[2], coresB[2]);
 	// Detecta se o valor do verde passa de certo limiar
 	// Esquerda
-	if(coresB[0] < limiarWhite[1][0] && coresB[1] < limiarWhite[1][1] && coresB[2] < limiarWhite[1][2] &&
-		coresB[1] > coresB[0] * G_THRESH && coresB[1] > coresB[2] * G_THRESH){
-		displayCenteredBigTextLine(10,"GREEN TURN ESQUERDO");
-		return 1;
+	if ((coresA[1] >= 40) && ((sqrt(pow(coresA[0], 2) + pow(coresA[2], 2)) - (coresA[1] - 20)) <= 0)){
+			displayCenteredBigTextLine(10,"GREEN TURN ESQUERDO");
+			return 2;
 	}
 	// Direita
-	if(coresA[0] < limiarWhite[0][0] && coresA[1] < limiarWhite[0][1] && coresA[2] < limiarWhite[0][2] &&
-		coresA[1] > coresA[0] * G_THRESH && coresA[1] > coresA[2] * G_THRESH){
-		displayCenteredBigTextLine(10,"GREEN TURN ESQUERDO");
-		return 1;
+	if ((coresB[1] >= 40) && ((sqrt(pow(coresB[0], 2) + pow(coresB[2], 2)) - (coresB[1] - 20)) <= 0)){
+			displayCenteredBigTextLine(10,"GREEN TURN DIREITO");
+			return 2;
 	}
 	//Cinza
 
@@ -310,14 +278,15 @@ void lineFollowing(){
 		if(estado == 1){
 			displayBigTextLine(10, "90 ESQUERDA %d", estado);
 			// 90° ESQUERDA
-			walkGreen(TURN_SPEED_90, TURN_TIME_90);
 			// Checando por encruzilhadas
 			int erro = read_line_sensor() - SET_POINT;
 			if(cor == 1){
 				greenTurn(false);
+				continue;
 			}
 			else if(cor == 2){
 				greenTurn(true);
+				continue;
 			}
 			else if(estado == 4){
 				if((erro > 20) || (erro < -20)){
@@ -339,7 +308,6 @@ void lineFollowing(){
 		if(estado == 2){
 			displayBigTextLine(10, "90 DIREITA %d", estado);
 			// 90° DIREITA
-			walkGreen(TURN_SPEED_90, TURN_TIME_90);
 			// Ler estado atual
 			sensor = read_line_sensor();
 			// Checando por encruzilhadas
