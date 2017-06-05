@@ -119,14 +119,11 @@ void receiveData(int byteCount) {
 
   }*/
 void sendData() {
-<<<<<<< HEAD
   //Serial.println(linha[val]);
   //Serial.println("q");
-=======
-  linha[0] = constrain(buffer[0],0,127);
-  Serial.print("Wire:");
-  Serial.println(linha[0]);
->>>>>>> b8a6118fe4124e8a3d9ea92e04252f3d6b1ef6f5
+  //linha[0] = constrain(buffer[0],0,127);
+  //Serial.print("Wire:");
+  //Serial.println(linha[0]);
   Wire.write(linha, 2);
   
   //
