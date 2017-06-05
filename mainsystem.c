@@ -180,6 +180,7 @@ int read_color_sensor(){
 	displayCenteredBigTextLine(7,"Azul: %d %d", coresA[2], coresB[2]);
 	// Detecta se o valor do verde passa de certo limiar
 	// Esquerda
+<<<<<<< HEAD
 	if ((coresA[1] >= 40) && ((sqrt(pow(coresA[0], 2) + pow(coresA[2], 2)) - (coresA[1] - 20)) <= 0)){
 			displayCenteredBigTextLine(10,"GREEN TURN ESQUERDO");
 			return 2;
@@ -188,6 +189,16 @@ int read_color_sensor(){
 	if ((coresB[1] >= 40) && ((sqrt(pow(coresB[0], 2) + pow(coresB[2], 2)) - (coresB[1] - 20)) <= 0)){
 			displayCenteredBigTextLine(10,"GREEN TURN DIREITO");
 			return 2;
+=======
+	if(coresB[0] < whiteErro && coresB[1] < whiteErro && coresB[2] < whiteErro && coresB[1] > coresB[0] * G_THRESH && coresB[1] > coresB[2] * G_THRESH){
+		displayCenteredBigTextLine(10,"GREEN TURN ESQUERDO");
+		return 1;
+	}
+	// Direita
+	if(coresA[0] < whiteErro && coresA[1] < whiteErro && coresA[2] < whiteErro && coresA[1] > coresA[0] * G_THRESH && coresA[1] > coresA[2] * G_THRESH){
+		displayCenteredBigTextLine(10,"GREEN TURN DIREITO");
+		return 2;
+>>>>>>> 548296015fb0381b0a52f0ec8c765f4bc72d62f8
 	}
 	//Cinza
 
@@ -252,6 +263,7 @@ void gTurn(bool direction){
 
 }
 
+<<<<<<< HEAD
 /**
 * LINE FOLLOWING
 */
@@ -261,6 +273,36 @@ void gTurn(bool direction){
 */
 void lineFollowing(){
 	while(1){
+=======
+//Virada do Verde
+void greenTurn(bool side){
+	walk(TURN_SPEED_90, TURN_TIME_90);
+	turn(60, side);
+	walk(TURN_SPEED_90, TURN_TIME_90/2);
+}
+
+/**
+* LINE FOLLOWING
+*/
+void lineFollowing(){
+	while(1){
+		if(getIRDistance(infraR)<20){
+			greenTurn(false);
+			walk(TURN_SPEED_90, TURN_TIME_90*4);
+			greenTurn(true);
+			walk(TURN_SPEED_90, TURN_TIME_90*12);
+			greenTurn(true);
+			read_line_sensor();
+			while(estado == 3){
+
+				motor[motorA] = -30;
+				motor[motorB] = -30;
+				read_line_sensor();
+			}
+			greenTurn(false);
+			walk(-TURN_SPEED_90, TURN_TIME_90*4);
+		}
+>>>>>>> 548296015fb0381b0a52f0ec8c765f4bc72d62f8
 		int sensor = read_line_sensor();
 		int cor = read_color_sensor();
 
@@ -339,15 +381,40 @@ void lineFollowing(){
 			GAP();
 		}
 	}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 548296015fb0381b0a52f0ec8c765f4bc72d62f8
 }
 
 /**
 * RESGASTE
 */
 void resgateMode(){
-
+	while(1){
+			linha = read_line_sensor();
+			//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
+			if(linha == 0){
+				motor[motorA] = 5;
+				motor[motorB] = -5;
+			}else{
+				if ((linha <= 100 + 5) && (linha >= 100 - 5)){
+					walk(10, 1);
+				}else if (linha > 100){
+					motor[motorA] = 5;
+					motor[motorB] = -5;
+				}else{
+					motor[motorA] = -5;
+					motor[motorB] = 5;
+				}
+			}
+			wait1Msec(300);
+	}
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 548296015fb0381b0a52f0ec8c765f4bc72d62f8
 
 /* ---------------------------------
 ||						  MAIN	    				||
