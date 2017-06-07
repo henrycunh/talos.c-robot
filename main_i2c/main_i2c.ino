@@ -6,7 +6,7 @@
 //define o endereço I2C escravo do arduino como 4 em hexadecimal
 
 SoftwareSerial mySerial(7, 6);
-//define que as portas RX, TX de software serão, respectivamente 9 e 8  
+//define que as portas RX, TX de software serão, respectivamente 7 e 6
 
 byte val = 0;
 bool resgate = false;
@@ -34,15 +34,20 @@ void setup() {
 
 void callback() {
   if(resgate){
-    if (Serial.available()){
+    if (resgate){
       
       buffer1[0] = Serial.read();
+      linha[0] = buffer1[0];
+      linha[0] = constrain(linha[0], 0, 127);
       Serial.print("[0]"); 
       Serial.println(buffer1[0]);
       buffer1[1] = Serial.read();
+      linha[1] = buffer1[1];
+      linha[1] = constrain(linha[1], 0, 127);
       Serial.print("[1]"); 
       Serial.println(buffer1[1]);
     }
+    resgate = false;
   }
   else{
      //Serial.println("callback");              
@@ -53,6 +58,7 @@ void callback() {
       }else if (leitura < 132){
         linha[0] = leitura;
       }
+      //Serial.println(linha[0]);
       linha[0] = constrain(linha[0], 0, 127);
       //Serial.println(linha[0]);
       //Serial.println(linha[0]);
@@ -77,7 +83,7 @@ void receiveData(int byteCount) {
   while (Wire.available() > 0) {
     
     val = Wire.read();
-    //Serial.println(val);
+    Serial.println(val);
     if(val == 13){
       //digitalWrite(13, HIGH);
       resgate = true;
@@ -124,7 +130,8 @@ void sendData() {
   //Serial.print("Wire:");
   //Serial.println(linha[0]);
   //linha[0] = buffer1[0];
-  Wire.write(linha, 2);
+  linha[2] = 8;
+  Wire.write(linha, 8);
   
   //
   //mySerial.flush();

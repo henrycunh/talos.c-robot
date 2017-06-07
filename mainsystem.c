@@ -22,7 +22,7 @@
 #define IMAGE_SETPOINT 47
 #define COLOR_ERRO 6
 
-bool resgate = false;
+bool resgate = true;
 int limiarWhite[2][6];
 
 /* ---------------------------------
@@ -86,7 +86,7 @@ void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte
 	sendMsg[5] = byte4;
 
 	// Enviando mensagem
-	sendI2CMsg(i2c, &sendMsg[0], 2);
+	sendI2CMsg(i2c, &sendMsg[0], 8);
 	// Esperar 30ms
 	wait1Msec(30);
 
@@ -96,6 +96,7 @@ void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte
 	// Resposta
 	linha = replyMsg[0];
 	estado = replyMsg[1];
+	displayCenteredBigTextLine(11,"%d", replyMsg[7]);
 	wait1Msec(35);
 }
 
@@ -139,7 +140,11 @@ void turn(float value, bool direction){
 
 // Lê os valores e estado do QTR8-A
 int read_line_sensor(){
-	i2c_msg(2,1,1,0,0,0);
+	int byte1;
+	if(resgate){
+		byte1 = 13;
+	}
+	i2c_msg(8,3,byte1,0,0,0);
 	int value = linha;
 	return value;
 }
