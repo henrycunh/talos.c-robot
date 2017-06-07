@@ -8,7 +8,6 @@
 SoftwareSerial mySerial(7, 6);
 //define que as portas RX, TX de software serão, respectivamente 9 e 8  
 
-
 byte val = 0;
 bool resgate = false;
 bool flag = false;
@@ -16,10 +15,10 @@ byte trans = 200;
 byte aux;
 byte estado;
 uint8_t linha[] = {0, 0, 0, 0, 0, 0, 0, 0};
-int buffer[] = {0, 0, 0, 0, 0, 0, 0, 0};
+int buffer1[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 void setup() {
-  //Serial.begin(9600);
+  Serial.begin(9600);
   Wire.begin(SLAVE_ADDRESS); //Inicia a comunicação I2C
   Wire.onReceive(receiveData); //Define a função que irá receber os dados do EV3
   Wire.onRequest(sendData); //Define a função que enviará os dados sob requisito do EV3
@@ -37,12 +36,12 @@ void callback() {
   if(resgate){
     if (Serial.available()){
       
-      buffer[0] = Serial.read();
+      buffer1[0] = Serial.read();
       Serial.print("[0]"); 
-      Serial.println(buffer[0]);
-      buffer[1] = Serial.read();
+      Serial.println(buffer1[0]);
+      buffer1[1] = Serial.read();
       Serial.print("[1]"); 
-      Serial.println(buffer[1]);
+      Serial.println(buffer1[1]);
     }
   }
   else{
@@ -124,6 +123,7 @@ void sendData() {
   //linha[0] = constrain(buffer[0],0,127);
   //Serial.print("Wire:");
   //Serial.println(linha[0]);
+  //linha[0] = buffer1[0];
   Wire.write(linha, 2);
   
   //

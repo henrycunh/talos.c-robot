@@ -17,7 +17,7 @@
 #define TURN_TIME_90 60
 #define TURN_SPEED_90 30
 #define G_THRESH 2.6
-#define TURN_ERRO_K 4
+#define TURN_ERRO_K 8
 #define IMAGE_KP 0.2
 #define IMAGE_SETPOINT 47
 #define COLOR_ERRO 6
@@ -46,7 +46,14 @@ int min(int a, int b, int c){
      (m > c) && (m = c);
      return m;
 }
-
+// Verifica se dois valores estão numa faixa
+bool faixa(int a, int b){
+		if ((a > b - 20) && (a < b - 5)){
+			return true;
+		}else{
+			return false;
+		}
+}
 /* ---------------------------------
 ||							I2C								||
 --------------------------------- */
@@ -163,6 +170,8 @@ void calibrateThresh(){
 
 // Lê o valor dos sensores de cor
 int read_color_sensor(){
+	static long t0;
+	static bool aux = false;
 	// Pegando cores do sensor esquerdo
 	long coresB[3];
 	getColorRGB(colorB, coresB[0], coresB[1], coresB[2]);
@@ -191,7 +200,21 @@ int read_color_sensor(){
 			return 1;
 	}
 	//Cinza
+	if ((faixa(coresA[0], limiarWhite[0][0])) && (faixa(coresA[1], limiarWhite[0][1])) && (faixa(coresA[2], limiarWhite[0][2])) && (faixa(coresB[0], limiarWhite[1][0])) && (faixa(coresB[1], limiarWhite[1][1])) && (faixa(coresB[2], limiarWhite[1][2]))){
+			if(!aux){
+				t0 = getMicroTimer();
+				aux = true;
+			}else{
+				if (getMicroTimer() - t0 >= 500000){
+					resgate = true;
+					return 3;
+				}
+			}
 
+	}
+	if (getMicroTimer() - t0 >= 1000000){
+			aux = false;
+	}
 	return 0;
 }
 
@@ -232,7 +255,7 @@ void GAP(){
 void corrigir(int limiar){
 	int erro = read_line_sensor() - SET_POINT;
 	while(erro > limiar){
-		erro = PID(read_line_sensor(), 0, KP, SET_POINT);
+		erro = PID(read_line_sensor(), OFFSET, KP, SET_POINT);
 	}
 }
 
@@ -242,183 +265,124 @@ void gTurn(bool direction){
 	while((erro > TURN_ERRO_K) || (erro < -TURN_ERRO_K)){
 		displayBigTextLine(10, "Erro: %d", erro);
 		if(direction){
-			motor[motorA] = -30;
-			motor[motorB] = 30;
+			motor[motorA] = -20;
+			motor[motorB] = 20;
 		} else {
-			motor[motorA] = 30;
-			motor[motorB] = -30;
+			motor[motorA] = 20;
+			motor[motorB] = -20;
 		}
 		erro = read_line_sensor() - SET_POINT;
 	}
 
 }
 
-//Virada do Verde
-void greenTurn(bool side){
-	walk(TURN_SPEED_90, TURN_TIME_90);
-	turn(60, side);
-	walk(TURN_SPEED_90, TURN_TIME_90/2);
-}
-
 //Saída do Verde
 void gExit(){
 	int cor;
+
 	do{
 		cor = read_color_sensor();
 		motor[motorA] = -20;
 		motor[motorB] = -20;
 	}while(cor != 0);
 }
+//Virada do Verde
+void greenTurn(bool side){
+	gExit();
+	walk(TURN_SPEED_90, TURN_TIME_90);
+	turn(50, side);
+	walk(TURN_SPEED_90, TURN_TIME_90/2);
+	corrigir(8);
+}
+//Saída de estado
+int StdOut(int mult, int std){
+	do{
+		read_line_sensor();
+		motor[motorA] = 20 * mult;
+		motor[motorB] = 20 * mult;
+		int cor = read_color_sensor();
+
+		// Detectando cor
+		if(cor == 1){
+			greenTurn(false);
+			gExit();
+			return 0;
+		}else if(cor == 2){
+			greenTurn(true);
+			gExit();
+			return 0;
+		}
+	}while(estado != std);
+	return 0;
+}
+//Tratamento 90°
+int grade90(bool side){
+	// 90°
+	// Checando por encruzilhadas
+	read_line_sensor();
+	int actualstt = estado;
+	do{
+		read_line_sensor();
+		motor[motorA] = -20;
+		motor[motorB] = -20;
+		int cor = read_color_sensor();
+		// Detectando cor
+		if(cor == 1){
+			greenTurn(false);
+			gExit();
+			return 0;
+		}else if(cor == 2){
+			greenTurn(true);
+			gExit();
+			return 0;
+		}
+	}while(estado == actualstt);
+	if(estado == 4){
+		//Caso seja uma encruzilhada ou um falso alerta, ajusta até estar na linha perfeitamente
+		int erro = read_line_sensor() - SET_POINT;
+		if((erro > 20) || (erro < -20)){
+				turn(30, !side);
+		}
+		return 0;
+
+	}
+	// Checando se é uma curva de 90° ou mais
+	else if(estado == 3){
+		//Vira 90° à esquerda
+		gTurn(side);
+		//Anda para frente
+		//Abaixo ele volta até encontrar a virada, depois vai pra frente e sai dela
+		read_line_sensor();
+		int Stdat = estado;
+		//StdOut(1, Stdat);
+		Stdat = estado;
+		StdOut(-1, Stdat);
+		read_line_sensor();
+		Stdat = estado;
+
+		corrigir(8);
+		return 0;
+	}
+	return 0;
+}
 /**
 * EURÍSTICA
 */
 int euState(int cor){
 	if(estado == 1){
+		if (resgate)
+			return 0;
 		displayBigTextLine(10, "90 ESQUERDA %d", estado);
 		// 90° ESQUERDA
 		// Checando por encruzilhadas
-		do{
-			read_line_sensor();
-			motor[motorA] = -20;
-			motor[motorB] = -20;
-			int cor = read_color_sensor();
-
-			// Detectando cor
-			if(cor == 1){
-				greenTurn(false);
-				gExit();
-				return 0;
-			}else if(cor == 2){
-				greenTurn(true);
-				gExit();
-				return 0;
-			}
-		}while(estado == 1);
-		int erro = read_line_sensor() - SET_POINT;
-		if(estado == 4){
-			//Caso seja uma encruzilhada ou um falso alerta, ajusta até estar na linha perfeitamente
-			int erro = read_line_sensor() - SET_POINT;
-			if((erro > 20) || (erro < -20)){
-				turn(30, false);
-			}
-			return 0;
-
-		}
-		// Checando se é uma curva de 90° ou mais
-		else if(estado == 3){
-			do{
-				read_line_sensor();
-				motor[motorA] = 20;
-				motor[motorB] = 20;
-				int cor = read_color_sensor();
-
-				// Detectando cor
-				if(cor == 1){
-					greenTurn(false);
-					gExit();
-					return 0;
-				}else if(cor == 2){
-					greenTurn(true);
-					gExit();
-					return 0;
-				}
-			}while(estado != 3);
-			//Vira 90° à esquerda
-			gTurn(true);
-			//Anda para frente
-			do{
-				read_line_sensor();
-				motor[motorA] = -20;
-				motor[motorB] = -20;
-				int cor = read_color_sensor();
-
-				// Detectando cor
-				if(cor == 1){
-					greenTurn(false);
-					gExit();
-					return 0;
-				}else if(cor == 2){
-					greenTurn(true);
-					gExit();
-					return 0;
-				}
-			}while(estado != 4);
-			corrigir(8);
-			return 0;
-		}
+		//mandando false/true
+		grade90(true);
 	}
 	else if(estado == 2){
 		displayBigTextLine(10, "90 DIREITA %d", estado);
 		// 90° DIREITA
 		// Ler estado atual
-		int sensor = read_line_sensor();
-		// Checando por encruzilhadas
-		do{
-			int cor = read_color_sensor();
-
-			// Detectando cor
-			if(cor == 1){
-				greenTurn(false);
-				gExit();
-				return 0;
-			}else if(cor == 2){
-				greenTurn(true);
-				gExit();
-				return 0;
-			}
-			read_line_sensor();
-			motor[motorA] = -20;
-			motor[motorB] = -20;
-		}while(estado == 2);
-		int erro = read_line_sensor() - SET_POINT;
-		if(estado == 4){
-			if((erro > 20) || (erro < -20)){
-				turn(30, true);
-			}
-			return 0;
-		}
-		// Checando se é uma curva de 90° ou mais
-		else if(estado == 3){
-			do{
-				read_line_sensor();
-				motor[motorA] = 20;
-				motor[motorB] = 20;
-				int cor = read_color_sensor();
-
-				// Detectando cor
-				if(cor == 1){
-					greenTurn(false);
-					gExit();
-					return 0;
-				}else if(cor == 2){
-					greenTurn(true);
-					gExit();
-					return 0;
-				}
-			}while(estado != 3);
-			//Vira 90° à direita
-			gTurn(false);
-			//vai para trás até encontrar a virada
-			do{
-				read_line_sensor();
-				motor[motorA] = -20;
-				motor[motorB] = -20;
-				int cor = read_color_sensor();
-
-				// Detectando cor
-				if(cor == 1){
-					greenTurn(false);
-					gExit();
-					return 0;
-				}else if(cor == 2){
-					greenTurn(true);
-					gExit();
-					return 0;
-				}
-			}while(estado != 4);
-			corrigir(8);
-			return 0;
-		}
+		grade90(false);
 	}
 	else if(estado == 3){
 		GAP();
@@ -430,7 +394,9 @@ int euState(int cor){
 */
 void lineFollowing(){
 	while(1){
-		if(getIRDistance(infraR)<20){
+		if (resgate)
+			break;
+		if(getIRDistance(infraR)<1){
 			greenTurn(false);
 			walk(TURN_SPEED_90, TURN_TIME_90*4);
 			greenTurn(true);
@@ -477,11 +443,13 @@ void resgateMode(){
 			linha = read_line_sensor();
 			//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
 			if(linha == 0){
-				motor[motorA] = 5;
-				motor[motorB] = -5;
+				motor[motorA] = 0;
+				motor[motorB] = 0;
 			}else{
 				if ((linha <= 100 + 5) && (linha >= 100 - 5)){
-					walk(10, 1);
+					motor[motorA] = 0;
+					motor[motorB] = 0;
+					//walk(10, 1);
 				}else if (linha > 100){
 					motor[motorA] = 5;
 					motor[motorB] = -5;
