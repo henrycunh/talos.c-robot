@@ -51,6 +51,14 @@ int min(int a, int b, int c){
      return m;
 }
 
+void stopUs(){
+	while (1){
+		motor[motorA] = 0;
+		motor[motorB] = 0;
+	}
+}
+
+
 /* ---------------------------------
 ||							I2C								||
 --------------------------------- */
@@ -102,6 +110,7 @@ void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte
 --------------------------------- */
 // Faz o robô andar para frente
 void walk(int value, float duration){
+	displayCenteredBigTextLine(1,"WALK");
 	resetMotorEncoder(motorA);
 	int a = getMotorEncoder(motorA);
 	if(value > 0){
@@ -167,21 +176,22 @@ void calibrateThresh(){
 		for(int a = 0; a < 2; a++){
 			for(int b = 0; b < 3; b++){
 				limiarWhite[a][b] = (a == 0 ? coresA[b] - COLOR_ERRO : coresB[b] - COLOR_ERRO);
+				limiarWhite[a][b] = map(limiarWhite[a][b], 0, 90, 0, 255);
 			}
 		}
 	}
 }
 
 // Lê o valor dos sensores de cor
+long coresA[3];
+long coresB[3];
 int read_color_sensor(){
 	eD();
 	// Pegando cores do sensor esquerdo
-	long coresB[3];
 	getColorRGB(colorB, coresB[0], coresB[1], coresB[2]);
 	// Pegando cores do sensor direito
-	long coresA[3];
 	getColorRGB(colorA, coresA[0], coresA[1], coresA[2]);
-	// Escreve os valores na tela
+
 	for(int a = 0; a < 3; a++){
 		coresA[a] = map(coresA[a], 0, 90, 0, 255);
 	}
@@ -189,6 +199,22 @@ int read_color_sensor(){
 		coresB[a] = map(coresB[a], 0, 90, 0, 255);
 	}
 	// Detecta se o valor do verde passa de certo limiar
+	//Cinza
+	writeDebugStreamLine("%d > %d",coresA[2],limiarWhite[0][2] / 4);
+	//stopUs();
+	read_line_sensor();
+	if ((coresA[2] > limiarWhite[0][2] / 4) && (coresB[2] > limiarWhite[1][2] / 4) && (coresA[2] < (3*limiarWhite[0][2])/5) && (coresB[2] < (3*limiarWhite[1][2])/5) && (linha < 70) && (linha > 50)){
+			displayCenteredBigTextLine(1,"CINZA");
+			setMotorTarget(motorA, 60, -20);
+			setMotorTarget(motorB, 60, -20);
+			if ((coresA[2] > limiarWhite[0][2] / 4) && (coresB[2] > limiarWhite[1][2] / 4) && (coresA[2] < (3*limiarWhite[0][2])/5) && (coresB[2] < (3*limiarWhite[1][2])/5)){
+				return 3;
+			}else{
+				setMotorTarget(motorA, 50, 20);
+				setMotorTarget(motorB, 50, 20);
+			}
+	}
+
 	// Esquerda
 	if ((coresA[1] >= 40) && ((sqrt(pow(coresA[0], 2) + pow(coresA[2], 2)) - (coresA[1] - 20)) <= 0)){
 			displayCenteredBigTextLine(1,"GREEN TURN ESQUERDO");
@@ -199,17 +225,7 @@ int read_color_sensor(){
 			displayCenteredBigTextLine(1,"GREEN TURN DIREITO");
 			return 1;
 	}
-	//Cinza
-	if ((coresA[2] > 1/4*limiarWhite[0][2]) && (coresB[2] > 1/4*limiarWhite[1][2]) && (coresA[2] > 3/5*limiarWhite[0][2]) && (coresB[2] < 3/5*limiarWhite[1][2])){
-			setMotorTarget(motorA, 30, -20);
-			setMotorTarget(motorB, 30, -20);
-			if ((coresA[2] > 1/4*limiarWhite[0][2]) && (coresB[2] > 1/4*limiarWhite[1][2]) && (coresA[2] > 3/5*limiarWhite[0][2]) && (coresB[2] < 3/5*limiarWhite[1][2])){
-				return 3;
-			}else{
-				setMotorTarget(motorA, 30, 20);
-				setMotorTarget(motorB, 30, 20);
-			}
-	}
+
 	return 0;
 }
 
@@ -217,12 +233,13 @@ int read_color_sensor(){
 /* ---------------------------------
 ||						   PID    					||
 --------------------------------- */
-int PID(int input, int offset, int KP1, int SET_POINT1){
+int PID(int input, int offset, float KP1, int SET_POINT1){
 	// Ultimo input
 	static int lstinput;
 	// Erro acumulado
 	static float erroAc;
 	int erro = input - SET_POINT1;
+	displayBigTextLine(1, "GENERIC PID: %d", erro);
 	float valor = (erro * KP1) + (input - lstinput) * KD + (erroAc) * KI;
 	motor[motorA] = valor + offset;
 	motor[motorB] = -valor + offset;
@@ -254,6 +271,7 @@ void corrigir(int limiar){
 
 //Saída do Verde
 void gExit(){
+	eD();
 	displayBigTextLine(1, "G EXIT");
 	int cor;
 	do {
@@ -264,6 +282,7 @@ void gExit(){
 }
 //Virada do Verde
 void greenTurn(bool side){
+	eD();
 	displayBigTextLine(1, "GREEN TURN");
 	gExit();
 	walk(TURN_SPEED_90, TURN_TIME_90);
@@ -293,7 +312,8 @@ int stdOut(int mult, int std){
 			return 0;
 		}
 		intCount++;
-	} while(estado != 3 && estado != 4 || intCount < INT_COUNT_MAX);
+		if (estado == 4) return 0;
+	} while(estado != std && intCount < INT_COUNT_MAX);
 	return 0;
 }
 
@@ -318,6 +338,7 @@ int grade90(bool dir){
 */
 int heuState(int cor){
 	eD();
+	int erro = read_line_sensor() - SET_POINT;
 	if(estado == 1){
 		if (resgate)
 			return 0;
@@ -333,7 +354,7 @@ int heuState(int cor){
 		// Ler estado atual
 		grade90(false);
 	}
-	else if(estado == 3){
+	else if((estado == 3) && (erro < 50) && (erro > -50)){
 		GAP();
 	}
 	return 0;
@@ -343,7 +364,7 @@ int heuState(int cor){
 /**
 * LINE FOLLOWING
 */
-void lineFollowing(){
+int lineFollowing(){
 	while(1){
 		if (resgate)
 			break;
@@ -373,10 +394,8 @@ void lineFollowing(){
 			greenTurn(true);
 			gExit();
 		}else if(cor == 3){
-			while(true){
-				motor[motorA] = 0;
-				motor[motorB] = 0;
-			}
+			resgate = true;
+			return 0;
 		}
 
 		if((sensor <= 127) && (sensor >= 0) && (estado == 4)){
@@ -389,6 +408,7 @@ void lineFollowing(){
 			displayBigTextLine(1, "HEURISTICA");
 		}
 	}
+	return 0;
 }
 
 /**
@@ -398,6 +418,7 @@ void resgateMode(){
 	while(1){
 			linha = read_line_sensor();
 			//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
+			while(true) displayBigTextLine(1, "RESGATE_MODE");
 			if(linha == 0){
 				motor[motorA] = 0;
 				motor[motorB] = 0;
