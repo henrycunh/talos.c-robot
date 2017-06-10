@@ -19,7 +19,9 @@
 #define G_THRESH 2.6
 #define TURN_ERRO_K 8
 #define IMAGE_KP 0.2
-#define IMAGE_SETPOINT 47
+#define IMAGE_SETPOINT 34
+#define IMAGE_OFFSET 8
+#define IMAGE_ERRO 10
 #define COLOR_ERRO 6
 #define INT_COUNT_MAX 100
 
@@ -103,7 +105,11 @@ void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte
 	estado = replyMsg[1];
 	wait1Msec(35);
 }
-
+//Leitura de bolas
+int read_camera(){
+	i2c_msg(8,3,13,0,0,0);
+	return linha;
+}
 
 /* ---------------------------------
 ||						MOVIMENTOS					||
@@ -184,6 +190,23 @@ void calibrateThresh(){
 task main()
 {
 
-
+	while(1){
+		displayBigTextLine(1, "%d", read_camera());
+		linha = read_line_sensor();
+		//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
+			if ((linha <IMAGE_SETPOINT + IMAGE_ERRO) && (linha >= IMAGE_SETPOINT - IMAGE_ERRO)){
+					motor[motorA] = 0;
+					motor[motorB] = 0;
+					walk(10, 20);
+					stopUs();
+				}else if (linha > IMAGE_SETPOINT){
+					motor[motorA] = IMAGE_OFFSET;
+					motor[motorB] = -IMAGE_OFFSET;
+				}else{
+					motor[motorA] = -IMAGE_OFFSET;
+					motor[motorB] = IMAGE_OFFSET;
+				}
+			}
+		wait1Msec(50);
 
 }
