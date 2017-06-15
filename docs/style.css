@@ -93,13 +93,18 @@ section h2{
     text-align: center;
 }
 
-section p{
+section p.tab{
     text-align: justify;
 }
 
-section p::before{
+section p.tab::before{
     content: ' ';
     padding-left: 2em;
+}
+
+p.desc{
+    text-align: justify;
+
 }
 
 ul{
@@ -112,9 +117,10 @@ ul li{
 }
 
 ul li .itemimg{
+    padding-top: 0.5em;
     width: 15%;
     display: inline-block;
-    vertical-align: top;
+    vertical-align: center;
 }
 
 ul li img{
@@ -126,4 +132,8 @@ ul li .item{
     width: 84%;
     display: inline-block;
     vertical-align: top;
+}
+
+ul li .item h3{
+    margin: 0.25em 0;
 }
