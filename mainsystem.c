@@ -2,18 +2,22 @@
 #pragma config(Sensor, S2,     i2c,            sensorEV3_GenericI2C)
 #pragma config(Sensor, S3,     infraR,         sensorEV3_IRSensor)
 #pragma config(Sensor, S4,     colorB,         sensorEV3_Color, modeEV3Color_Color)
-//S1 = Direita || S4 = Esquerda
+/** CONFIGURAÇÃO DOS SENSORES 
+ * S1 => Sensor de Cor Direito
+ * S2 => Sensor do I2C
+ * S3 => Sensor Infravermelho
+ * S4 => Sensor de Cor Esquerdo
+ */ 
 
-// Definindo endereços do Arduino
-#define ARDUINO_ADDRESS 0x08
-#define ARDUINO_PORT S2
-#define KP 0.85
-#define KI 0.0
-#define KD 0.2
-#define SET_POINT 65
-#define OFFSET -18
-#define TURN_RATE_90 70
-#define TURN_TIME_90 60
+// CONSTANTES GLOBAIS
+#define ARDUINO_ADDRESS 0x08 // Endereço do Arduino
+#define ARDUINO_PORT S2 // Port do sensor do Arduino
+#define KP 0.85 // Constante Proporcional do PID
+#define KI 0.0 // Constante de Integral do PID
+#define KD 0.2 // Constante Derivativa do PID
+#define SET_POINT 65 // Ponto intermediário das leituras do sensor QTR8
+#define OFFSET -18 // Offset de Velocidade do PID 
+#define TURN_TIME_90 60 // Tempo da 
 #define TURN_SPEED_90 30
 #define G_THRESH 2.6
 #define TURN_ERRO_K 8
