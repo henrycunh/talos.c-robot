@@ -109,18 +109,21 @@ p.desc{
 
 ul{
     list-style: none;
+    padding: 0;
 }
 
 
 ul li{
     margin-bottom: 2em;
+
 }
 
 ul li .itemimg{
     padding-top: 0.5em;
-    width: 15%;
+    width: 32px;
     display: inline-block;
     vertical-align: center;
+    margin-right: 1em;
 }
 
 ul li img{
@@ -129,7 +132,7 @@ ul li img{
 
 
 ul li .item{
-    width: 84%;
+    width: 80%;
     display: inline-block;
     vertical-align: top;
 }
