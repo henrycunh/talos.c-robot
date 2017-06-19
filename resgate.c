@@ -38,20 +38,6 @@ void eD(){ eraseDisplay(); }
 long map( long x, long in_min, long in_max, long out_min, long out_max){
 	return (x - in_min) * ( out_max - out_min) / ( in_max - in_min ) + out_min ;
 }
-// Pega o maior de três números
-int max(int a, int b, int c){
-     int m = a;
-     (m < b) && (m = b);
-     (m < c) && (m = c);
-     return m;
-}
-// Pega o menor de três números
-int min(int a, int b, int c){
-     int m = a;
-     (m > b) && (m = b);
-     (m > c) && (m = c);
-     return m;
-}
 
 void stopUs(){
 	while (1){
@@ -191,6 +177,8 @@ task main()
 {
 
 	while(1){
+
+
 		displayBigTextLine(1, "%d", read_camera());
 		linha = read_line_sensor();
 		//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);

@@ -59,7 +59,9 @@ void callback() {
         linha[0] = leitura;
       }
       //Serial.println(linha[0]);
+      linha[2] = map(analogRead(3), 440, 330, 0, 127);
       linha[0] = constrain(linha[0], 0, 127);
+      //Serial.println(linha[0]);
       //Serial.println(linha[0]);
       //Serial.println(linha[0]);
       //Serial.println(linha[1]);
@@ -83,7 +85,7 @@ void receiveData(int byteCount) {
   while (Wire.available() > 0) {
     
     val = Wire.read();
-    Serial.println(val);
+    //Serial.println(val);
     if(val == 13){
       //digitalWrite(13, HIGH);
       resgate = true;
@@ -121,7 +123,6 @@ void receiveData(int byteCount) {
   byte value = (int)map(lineBrute, -2500, 2500, 0, 127); //Realiza a conversão do valor unitário da soma analógica para um valor transferível via I2C, ou seja, um valor entre 0 e 127
   value = constrain(value, 0, 127); // Garante que o valor enviado para o UNO estará entre 0 e 127
   return value;
-
   }*/
 void sendData() {
   //Serial.println(linha[val]);
@@ -130,7 +131,6 @@ void sendData() {
   //Serial.print("Wire:");
   //Serial.println(linha[0]);
   //linha[0] = buffer1[0];
-  linha[2] = 8;
   Wire.write(linha, 8);
   
   //
@@ -142,7 +142,6 @@ void sendData() {
 /*byte getData() {
   //mySerial.flush();
   if (mySerial.available()) {
-
     linha[0] = mySerial.read();
     while (linha[0] > 127) {
       linha[0] = mySerial.read();
