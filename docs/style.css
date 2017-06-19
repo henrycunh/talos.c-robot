@@ -1,0 +1,142 @@
+#logo{
+    position: fixed;
+    opacity: 0.4;
+    bottom: 16px;
+    right: 16px;
+    width: 72px;
+}
+
+.bg{
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: -1;
+    background: linear-gradient(to bottom, rgba(17, 37, 26, 0.75) 0%, rgba(0, 0, 0, 0.98) 100%), url(background.jpg);
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+nav{
+    width: 16.5%;
+    text-align: right;
+    padding-top: 4em;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    border-right: 2px solid rgb(255, 207, 80);
+    background: rgba(12, 30, 39, 0.44);
+}
+
+nav a{
+    display: block;    
+    padding-right: 1.5em;
+    padding-bottom: 0.5em;    
+    padding-top: 0.5em;
+    margin-bottom: -2px;
+    color: rgb(255, 215, 107);
+    font-family: 'Bitter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    font-size: 1.1em;
+    border-bottom: 2px solid transparent;    
+    border-top: 2px solid transparent;
+    transition: 0.5s ease-in-out;
+}
+
+nav a:hover{
+    color: rgb(255, 234, 179);
+    border-top: 2px solid #ffcf50;
+    border-bottom: 2px solid #ffcf50;    
+    padding-right: 1.8em;
+    background: rgba(25, 97, 134, 0.44);
+
+}
+
+.header{
+    color: rgb(255, 215, 107);
+    font-family: 'Bitter', sans-serif;
+    display: block;
+    width: 75%;
+    float: right;
+    text-transform: uppercase;
+    font-size: 2em;
+    font-weight: bold;
+    text-align: center;
+    top: 1em;
+    right: 2em;
+    position: absolute;
+}
+
+.content{
+    border: 2px solid #ffcf50;
+    width: 75%;
+    float: right;
+    min-height: 500px;
+    margin: 4em;
+    margin-top: 4.75em;
+    background: rgba(12, 30, 39, 0.74);
+}
+
+section{
+    padding: 1em;
+    color: #ffdf8a;
+    margin: 1em 0;
+    min-height: 470px;
+}
+
+section h2{
+    font-family: 'Bitter', sans-serif;
+    color: #ffcf50;
+    font-weight: normal;
+    text-align: center;
+}
+
+section p.tab{
+    text-align: justify;
+}
+
+section p.tab::before{
+    content: ' ';
+    padding-left: 2em;
+}
+
+p.desc{
+    text-align: justify;
+
+}
+
+ul{
+    list-style: none;
+    padding: 0;
+}
+
+
+ul li{
+    margin-bottom: 2em;
+
+}
+
+ul li .itemimg{
+    padding-top: 0.5em;
+    width: 32px;
+    display: inline-block;
+    vertical-align: center;
+    margin-right: 1em;
+}
+
+ul li img{
+    width: 32px;
+}
+
+
+ul li .item{
+    width: 80%;
+    display: inline-block;
+    vertical-align: top;
+}
+
+ul li .item h3{
+    margin: 0.25em 0;
+}

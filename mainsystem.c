@@ -3,6 +3,8 @@
 #pragma config(Sensor, S3,     infraR,         sensorEV3_IRSensor)
 #pragma config(Sensor, S4,     colorB,         sensorEV3_Color, modeEV3Color_Color)
 /** CONFIGURA«√O DOS SENSORES
+=======
+/** CONFIGURA√?√?O DOS SENSORES
  * S1 => Sensor de Cor Direito
  * S2 => Sensor do I2C
  * S3 => Sensor Infravermelho
@@ -37,7 +39,7 @@ void print(char *str){
 	displayCenteredBigTextLine(1,"%s",str);
 }
 
-// Realiza mudanÁa na magnitude
+// Realiza mudan√ßa na magnitude
 long map( long x, long in_min, long in_max, long out_min, long out_max){
 	return (x - in_min) * ( out_max - out_min) / ( in_max - in_min ) + out_min ;
 }
@@ -53,9 +55,9 @@ void stopUs(){
 /* ---------------------------------
 ||							I2C								||
 --------------------------------- */
-// Vari·vel que armazena a posiÁ„o do sensor de 0 a 127
+// Vari√°vel que armazena a posi√ß√£o do sensor de 0 a 127
 int linha;
-// Vari·vel que armazena o estado especial do sensor de linha
+// Vari√°vel que armazena o estado especial do sensor de linha
 int estado;
 // Armazena a angulacao do sensor
 int gyro;
@@ -70,11 +72,11 @@ byte sendMsg[10];
 void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte3, byte byte4){
 	// Pegando o status do sensor I2C
 	mI2CStatus = nI2CStatus[i2c];
-	// Reservando espaÁo na memÛria para a resposta
+	// Reservando espa√ßo na mem√≥ria para a resposta
 	memset(replyMsg, 0, sizeof(replyMsg));
-	// Reservando espaÁo no tamanho da mensagem
+	// Reservando espa√ßo no tamanho da mensagem
 	message_size += 3;
-	// Atribuindo o tamanho da mensagem e o endereÁo
+	// Atribuindo o tamanho da mensagem e o endere√ßo
 	sendMsg[0] = message_size;
 	sendMsg[1] = ARDUINO_ADDRESS;
 	// Atribuindo os bytes da mensagem
@@ -116,7 +118,7 @@ void walk(int value, float duration){
 		}
 	}
 }
-// Faz o robÙ girar em graus
+// Faz o rob√¥ girar em graus
 void turn(float value, bool direction){
 	print("TURN");
 	value = map(value, 0, 180, 0, 1320);
@@ -134,7 +136,7 @@ void turn(float value, bool direction){
 	}
 }
 
-// LÍ os valores e estado do QTR8-A
+// L√™ os valores e estado do QTR8-A
 int read_line_sensor(){
 	int byte1;
 	if(resgate){
@@ -150,7 +152,7 @@ int read_line_sensor(){
 
 // Calibra o threshold de branco e preto
 void calibrateThresh(){
-	// CalibraÁ„o do branco
+	// Calibra√ß√£o do branco
 	while(!getButtonPress(buttonEnter)){
 		// Pegando cores do sensor esquerdo
 		long coresB[3];
@@ -172,7 +174,7 @@ void calibrateThresh(){
 	}
 }
 
-// LÍ o valor dos sensores de cor
+// L√™ o valor dos sensores de cor
 long coresA[3];
 long coresB[3];
 int read_color_sensor(){
@@ -264,7 +266,6 @@ void GAP(){
 		print("G A P")
 	}
 }
-
 //SaÌda do Verde
 void gExit(){
 	int cor;
@@ -284,7 +285,7 @@ void greenTurn(bool side){
 	walk(TURN_SPEED_90, TURN_TIME_90/2);
 	corrigir(8);
 }
-//SaÌda de estado
+//Sa√≠da de estado
 int stdOut(int mult, int std){
 	int intCount = 0;
 	do{
@@ -309,7 +310,7 @@ int stdOut(int mult, int std){
 	return 0;
 }
 
-// Tratamento 90∞
+// Tratamento 90¬∞
 int grade90(bool dir){
 	if(estado != 4) stdOut(-1, 3);
 	read_line_sensor();
@@ -325,7 +326,7 @@ int grade90(bool dir){
 }
 
 /**
-* HEURÕSTICA
+* HEUR√çSTICA
 */
 int heuState(int cor){
 	int erro = read_line_sensor() - SET_POINT;
@@ -337,7 +338,7 @@ int heuState(int cor){
 	}
 	else if(estado == 2){
 		displayBigTextLine(1, "90 DIREITA %d", estado);
-		// 90∞ DIREITA
+		// 90¬∞ DIREITA
 		// Ler estado atual
 		print("HEU STATE 2");
 		grade90(false);
@@ -392,7 +393,6 @@ int lineFollowing(){
 			//resgate = true;
 			//return 0;
 		}
-
 		// PID
 		if((sensor <= 127) && (sensor >= 0) && (estado == 4)){
 			int erro = PID(sensor, OFFSET, KP, SET_POINT);
@@ -413,8 +413,6 @@ int lineFollowing(){
 --------------------------------- */
 task main()
 {
-
-
 	calibrateThresh();
 	while(1){
 		if(1){ // Checa por resgate
