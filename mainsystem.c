@@ -3,8 +3,6 @@
 #pragma config(Sensor, S3,     infraR,         sensorEV3_IRSensor)
 #pragma config(Sensor, S4,     colorB,         sensorEV3_Color, modeEV3Color_Color)
 /** CONFIGURAÇÃO DOS SENSORES
-=======
-/** CONFIGURAÃ?Ã?O DOS SENSORES
  * S1 => Sensor de Cor Direito
  * S2 => Sensor do I2C
  * S3 => Sensor Infravermelho
@@ -94,9 +92,9 @@ void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte
 	readI2CReply(i2c, &replyMsg[0], reply_size);
 
 	// Resposta
-	linha = replyMsg[0];
-	estado = replyMsg[1];
-	gyro = replyMsg[2];
+	linha = replyMsg[0] == 0 ? linha : replyMsg[0];
+	estado = replyMsg[1] == 0 ? estado : replyMsg[1];
+	gyro = replyMsg[2] == 0 ? gyro : replyMsg[2];
 	wait1Msec(35);
 }
 
@@ -310,18 +308,35 @@ int stdOut(int mult, int std){
 	return 0;
 }
 
-// Tratamento 90Â°
+
+/**
+ * Cuida de curvas de 90° da seguinte forma:
+ * 		O robô vai para frente, checa se está em uma
+ * 		área sem linhas, vira um pouco para
+ * 		o lado contrário, corrige usando PID, retorna
+ * 		um pouco, e então corrige de novo usando PID.
+ *
+ * @param {bool} dir Direção da curva
+ */
 int grade90(bool dir){
-	if(estado != 4) stdOut(-1, 3);
+	print("GRADE 90 ");
+	// Vai para frente
+	walk(15,45);
+	// Checa o estado
 	read_line_sensor();
 	if(estado == 3){
-		int erro;
+		print("GRADE 90");
+		// Vira para o lado contrário
 		turn(15, dir);
+		// Corrige usando PID
+		int erro;
 		do {
-			print("GRADE 90");
 			erro = PID(read_line_sensor(), OFFSET/2, KP, SET_POINT);
+			displayBigTextLine(1,"GRADE 90 | Err: %d", erro);
 		}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
 	}
+	// Retorna e corrige
+	corrigir(8);
 	return 0;
 }
 
@@ -358,12 +373,7 @@ int lineFollowing(){
 	while(1){
 		int sensor = read_line_sensor();
 		int cor = read_color_sensor();
-		if(gyro > GYRO_THRESH_MAX && gyro < GYRO_THRESH_MIN){
-			int erro = PID(sensor, OFFSET, KP, SET_POINT);
-			eraseDisplay();
-			displayCenteredBigTextLine(1, "PID RAMPA: %d | %d", erro, gyro);
-			continue;
-		}
+
 		if (resgate)
 			break;
 		if(getIRDistance(infraR)<1){
@@ -407,6 +417,16 @@ int lineFollowing(){
 	return 0;
 }
 
+int checkRampa(){
+	int sensor = read_line_sensor();
+	if(gyro > GYRO_THRESH_MAX && gyro < GYRO_THRESH_MIN){
+			int erro = PID(sensor, OFFSET, KP, SET_POINT);
+			eraseDisplay();
+			displayCenteredBigTextLine(1, "PID RAMPA: %d | %d", erro, gyro);
+			return 1;
+	}
+	return 0;
+}
 
 /* ---------------------------------
 ||						  MAIN	    				||
@@ -415,7 +435,7 @@ task main()
 {
 	calibrateThresh();
 	while(1){
-		if(1){ // Checa por resgate
+		if(!checkRampa()){
 			eraseDisplay();
 			lineFollowing();
 		}
