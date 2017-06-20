@@ -3,8 +3,6 @@
 #pragma config(Sensor, S3,     infraR,         sensorEV3_IRSensor)
 #pragma config(Sensor, S4,     colorB,         sensorEV3_Color, modeEV3Color_Color)
 /** CONFIGURAÇÃO DOS SENSORES
-=======
-/** CONFIGURAÃ?Ã?O DOS SENSORES
  * S1 => Sensor de Cor Direito
  * S2 => Sensor do I2C
  * S3 => Sensor Infravermelho
@@ -27,8 +25,8 @@
 #define IMAGE_SETPOINT 47
 #define COLOR_ERRO 6
 #define INT_COUNT_MAX 20
-#define GYRO_THRESH_MAX 55
-#define GYRO_THRESH_MIN 40
+#define GYRO_THRESH_MAX 0
+#define GYRO_THRESH_MIN -30
 
 bool resgate = false;
 int limiarWhite[2][3];
@@ -42,13 +40,6 @@ void print(char *str){
 // Realiza mudanÃ§a na magnitude
 long map( long x, long in_min, long in_max, long out_min, long out_max){
 	return (x - in_min) * ( out_max - out_min) / ( in_max - in_min ) + out_min ;
-}
-
-void stopUs(){
-	while (1){
-		motor[motorA] = 0;
-		motor[motorB] = 0;
-	}
 }
 
 
@@ -207,7 +198,7 @@ int read_color_sensor(){
 
 	// Esquerda
 	if ((coresA[1] >= 40) && ((sqrt(pow(coresA[0], 2) + pow(coresA[2], 2)) - (coresA[1] - 20)) <= 0)){
-			print("GREEN TURN ESQUERDO")
+			print("GREEN TURN ESQUERDO");
 			return 2;
 	}
 	// Direita
@@ -241,7 +232,7 @@ int PID(int input, int offset, float KP1, int SET_POINT1){
 bool corrigido = false;
 // Corrigir
 void corrigir(int limiar){
-	print("CORRIGINDO")
+	print("CORRIGINDO");
 	int erro = read_line_sensor() - SET_POINT;
 	while(erro > limiar){
 		erro = PID(read_line_sensor(), OFFSET/3, KP, SET_POINT);
@@ -263,7 +254,7 @@ void GAP(){
 		motor[motorA] = -20;
 		motor[motorB] = -20;
 		read_line_sensor();
-		print("G A P")
+		print("G A P");
 	}
 }
 //Saída do Verde
@@ -279,7 +270,7 @@ void gExit(){
 //Virada do Verde
 void greenTurn(bool side){
 	gExit();
-	print("GREEN TURN")
+	print("GREEN TURN");
 	walk(TURN_SPEED_90, TURN_TIME_90);
 	turn(50, side);
 	walk(TURN_SPEED_90, TURN_TIME_90/2);
@@ -289,7 +280,7 @@ void greenTurn(bool side){
 int stdOut(int mult, int std){
 	int intCount = 0;
 	do{
-		print("SAIR DE ESTADO")
+		print("SAIR DE ESTADO");
 		read_line_sensor();
 		motor[motorA] = 20 * mult;
 		motor[motorB] = 20 * mult;
@@ -394,7 +385,7 @@ int lineFollowing(){
 			//return 0;
 		}
 		// PID
-		if((sensor <= 127) && (sensor >= 0) && (estado == 4)){
+		if((sensor <= 127) && (estado == 4)){
 			int erro = PID(sensor, OFFSET, KP, SET_POINT);
 			eraseDisplay();
 			displayCenteredBigTextLine(1, "PID: %d | %d", erro, gyro);
