@@ -67,7 +67,9 @@ byte replyMsg[10];
 // Armazena a mensagem a ser enviada
 byte sendMsg[10];
 
-// Mandar e receber mensagens para o I2C
+/**
+ * TESTE
+ */
 void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte3, byte byte4){
 	// Pegando o status do sensor I2C
 	mI2CStatus = nI2CStatus[i2c];
@@ -231,45 +233,10 @@ char * fnView = "viewData.csv";
 
 task main()
 {
-	long fhRaw = fileOpenWrite(fnRaw);
-	long fhView = fileOpenWrite(fnView);
+	i2c_msg(2, 1, 13, 0, 0, 0);
 	calibrateThresh();
-	short x = 0;
-	/*char dataRaw[600];
-	char dataView[1000];
-	strcpy(dataRaw, "X,Y,\n");*/
-	datalogOpen(0,2,false);
-	while(getButtonPress(buttonDown) == 0){
-		while(getButtonPress(2) == 1){}
-		int cor = read_color_sensor();
-		/*char drTemp[20];
-		char dvTemp[60];
-		sprintf(drTemp, "%d,%d,\n", x, coresA[2]);
-		sprintf(dvTemp, "X:%d | Y:%d | Cor: %d\n", x, coresA[2], cor);
-		strcat(dataRaw,drTemp);
-		strcat(dataView,dvTemp);*/
-		displayCenteredBigTextLine(1,"X:%d | Y:%d | Cor: %d", x, coresA[2], cor);
-		datalogAddValue(0, x);
-		datalogAddValue(1, coresA[2]);
-		x++;
-		motor[motorA] = -15;
-		motor[motorB] = -15;
-	}
-	datalogClose();
-	/*int drLen = strlen(dataRaw);
-	int dvLen = strlen(dataView);
-	// Imprimindo
-	fileWriteData(fhRaw, dataRaw, drLen + 1);
-	fileWriteData(fhView, dataView, dvLen + 1);
-	// Fechando IO Bus
-	fileClose(fhRaw);
-	fileClose(fhView);*/
-
-	stopUs();
 	// Resgate Original
 	while(1){
-
-
 		displayBigTextLine(1, "%d", read_camera());
 		linha = read_line_sensor();
 		//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
