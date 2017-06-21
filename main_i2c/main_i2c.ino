@@ -1,12 +1,15 @@
 #include <Wire.h>
 #include <SoftwareSerial.h>
 #include <TimerOne.h>
+#include <Ultrasonic.h>
 
 #define SLAVE_ADDRESS 0x04
 //define o endereço I2C escravo do arduino como 4 em hexadecimal
 
 SoftwareSerial mySerial(7, 6);
 //define que as portas RX, TX de software serão, respectivamente 7 e 6
+Ultrasonic ultrasonic1(11, 8);
+Ultrasonic ultrasonic2(10, 9);
 
 byte val = 0;
 bool resgate = false;
@@ -16,6 +19,9 @@ byte aux;
 byte estado;
 uint8_t linha[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int buffer1[] = {0, 0, 0, 0, 0, 0, 0, 0};
+float distancia1;
+float distancia2;
+const float smooth = 0.4;
 
 void setup() {
   Serial.begin(9600);
@@ -47,7 +53,6 @@ void callback() {
       Serial.print("[1]"); 
       Serial.println(buffer1[1]);
     }
-    resgate = false;
   }
   else{
      //Serial.println("callback");              
@@ -61,6 +66,12 @@ void callback() {
       //Serial.println(linha[0]);
       linha[2] = map(analogRead(3), 440, 330, 0, 127);
       linha[0] = constrain(linha[0], 0, 127);
+      //Captura o valor do sensor ultrasonico esquerdo
+      distancia1 = ultrasonic1.distanceRead()*smooth + distancia1*(1-smooth);
+      //Captura o valor do sensor ultrasonico direito
+      distancia2 = ultrasonic2.distanceRead()*smooth + distancia2*(1-smooth);
+      linha[3] = constrain((int)distancia1, 0, 127);
+      linha[4] = constrain((int)distancia2, 0, 127);
       //Serial.println(linha[0]);
       //Serial.println(linha[0]);
       //Serial.println(linha[0]);
@@ -89,6 +100,9 @@ void receiveData(int byteCount) {
     if(val == 13){
       //digitalWrite(13, HIGH);
       resgate = true;
+    }
+    if(val == -1){
+      resgate = false;
     }
     //Serial.println(val);
     flag = true;
