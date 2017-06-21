@@ -221,6 +221,12 @@ int lineFollowing(){
 		// Faz a leitura da linha e do verde
 		int sensor = read_line_sensor(1);
 		int cor = read_color_sensor();
+		if(gyro > GYRO_THRESH_MAX || gyro < GYRO_THRESH_MIN){
+			int erro = PID(sensor, OFFSET, KP, SET_POINT);
+			eraseDisplay();
+			displayCenteredBigTextLine(1, "PID RAMPA: %d | %d", erro, gyro);
+			return 0;
+		}
 		// Checa pelo resgate
 		if (resgate)
 			return 0;
@@ -257,9 +263,9 @@ int lineFollowing(){
  * ------------------------------------------------------
  * @param | [int] gyroRange | Limite mínimo do giroscópio
  */
- int checkRampa(int gyroRange){
+ int checkRampa(void){
    	// Checa se o robô está no limite
-		if(gyro > gyroRange){
+		if(gyro > GYRO_THRESH_MAX || gyro < GYRO_THRESH_MIN){
 			// Executa o PID
 			int sensor = read_line_sensor(1);
 			int erro = PID(sensor, OFFSET, KP, SET_POINT);
@@ -269,11 +275,16 @@ int lineFollowing(){
 			if(resgateCount == 15)
 				stopUs();
 			// Caso esteja fora de uma linha, e em superfície irregular
-			if(estado == 3 && offRoad)
+			if(estado == 3 && offRoad){
 				// Adiciona um ao contador de resgate
 				resgateCount++;
+				displayCenteredBigTextLine(10, "OFFROAD");
+			}
+			// Caso o alarme seja falso e seja apenas um obstáculo
+			if(!offRoad)
+				resgateCount = 0;
 			// Se o estado for igual a 3, define superfície irregular
-			offRoad = estado == 3 ? true : offRoad;
+			offRoad = estado == 3 ? true : false;
 			return 1;
 		}
 		return 0;

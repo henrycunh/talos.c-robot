@@ -24,8 +24,8 @@
 #define IMAGE_SETPOINT 47 // Ponto intermediário da busca no resgate
 #define COLOR_ERRO 6 // Erro permitido da cor durante a calibração
 #define INT_COUNT_MAX 20 // Máximo de iterações da saida de estado
-#define GYRO_THRESH_MAX 55 // Limiar máximo do giroscópio
-#define GYRO_THRESH_MIN 40 // Limiar mínimo do giroscópio
+#define GYRO_THRESH_MAX 10 // Limiar máximo do giroscópio
+#define GYRO_THRESH_MIN -20 // Limiar mínimo do giroscópio
 #define SMOOTH_K 0.2 // Costante do Exponential Smoothing, usado no giroscópio
 #define A_MOTOR_OFFSET 1 // Ajuste do offset no motor A
 #define B_MOTOR_OFFSET 1 // Ajuste do offset no motor B
@@ -60,6 +60,9 @@ task main
 	calibrateThresh();
 	// Loop principal
 	while(1){
+			// Caso esteja na rampa
+			if(checkRampa())
+				continue;
 			// Executa a função de seguir linhas
 			lineFollowing();
 	}
