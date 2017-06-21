@@ -224,13 +224,6 @@ void calibrateThresh(){
 	}
 }
 
-char * fnRaw = "rawData.csv";
-char * fnView = "viewData.csv";
-
-
-
-
-
 task main()
 {
 	i2c_msg(2, 1, 13, 0, 0, 0);
@@ -241,10 +234,7 @@ task main()
 		linha = read_line_sensor();
 		//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
 			if ((linha <IMAGE_SETPOINT + IMAGE_ERRO) && (linha >= IMAGE_SETPOINT - IMAGE_ERRO)){
-					motor[motorA] = 0;
-					motor[motorB] = 0;
 					walk(10, 20);
-					stopUs();
 				}else if (linha > IMAGE_SETPOINT){
 					motor[motorA] = IMAGE_OFFSET;
 					motor[motorB] = -IMAGE_OFFSET;

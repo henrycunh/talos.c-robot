@@ -54,7 +54,7 @@ nav a:hover{
 
 }
 
-.header{
+.header-title{
     color: rgb(255, 215, 107);
     font-family: 'Bitter', sans-serif;
     display: block;
@@ -104,7 +104,7 @@ section p.tab::before{
 
 p.desc{
     text-align: justify;
-
+    color: #ffdf8a;
 }
 
 ul{
@@ -139,4 +139,13 @@ ul li .item{
 
 ul li .item h3{
     margin: 0.25em 0;
+}
+
+.titulo {
+    color: #ffcf50 !important;
+}
+
+.ui.list .item{
+   padding: 1em 0 !important;
+   border-bottom: 1px solid #ffcf50 !important; 
 }

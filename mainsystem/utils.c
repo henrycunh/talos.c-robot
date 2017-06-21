@@ -15,7 +15,7 @@
 void print(char *str){
 	eraseDisplay();
 	displayCenteredBigTextLine(1,"%s",str);
-	displayCenteredBigTextLine(10,"%s",gyro);
+	displayCenteredBigTextLine(10,"%d",gyro);
 }
 
 /**

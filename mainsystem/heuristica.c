@@ -17,7 +17,7 @@ void corrigir(int limiar){
 	print("CORRIGINDO");
 	int erro = read_line_sensor(1) - SET_POINT;
 	while(erro > limiar){
-		erro = PID(read_line_sensor(1), OFFSET/3, KP, SET_POINT);
+		erro = PID(read_line_sensor(1), OFFSET/3, KP*2, SET_POINT);
 	}
 	corrigido = true;
 }
@@ -30,16 +30,12 @@ void corrigir(int limiar){
  * uma linha dentro dos limites do sensor
  */
 void gap(){
-	// Checa se já foi corrigido
-	if(!corrigido){
-		// Se não foi, anda um pouco para trás
-		walk(-20, 80);
-		// E corrige
-		corrigir(6);
-		return;
-	}
-	// Se já foi, marca como não corrigido
-	corrigido = !corrigido;
+	// Se não foi, anda um pouco para trás
+	walk(-20, 80);
+	// E corrige
+	corrigir(6);
+	if(estado != 4) return;
+	walk(20,80);
 	// E enquanto estiver fora da linha
 	read_line_sensor(1);
 	while(estado == 3){
@@ -130,6 +126,7 @@ int grade90(bool dir){
 	print("GRADE 90");
 	read_line_sensor(1);
 	// Sai do estado atual
+	// Garante que a detecção de 90º não é um falso positivo
 	if(estado != 4)
 		sairEstado(-1, 3);
 	// Se estiver fora da linha
@@ -143,10 +140,14 @@ int grade90(bool dir){
 			erro = PID(read_line_sensor(1), OFFSET/2, KP, SET_POINT);
 		}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
 	}
-	// Anda um pouco para trás
-	walk(-10,45);
-	// Corrige novamente
-	corrigir(8);
+	read_line_sensor(1);
+	if(estado != 4){
+
+		// Anda para trás
+		walk(-15,45);
+		// Corrige novamente
+		corrigir(5);
+	}
 	return 0;
 }
 
@@ -277,4 +278,3 @@ int lineFollowing(){
 		}
 		return 0;
  }
-
