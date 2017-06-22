@@ -45,13 +45,9 @@ int callback() {
     buffer1[0] = Serial.read();
     linha[0] = buffer1[0];
     linha[0] = constrain(linha[0], 0, 127);
-    Serial.print("[0]");
-    Serial.println(buffer1[0]);
     buffer1[1] = Serial.read();
     linha[1] = buffer1[1];
     linha[1] = constrain(linha[1], 0, 127);
-    Serial.print("[1]");
-    Serial.println(buffer1[1]);
   } else if (ultra) {
     //Captura o valor do sensor ultrasonico esquerdo
     distancia1 = ultrasonic1.distanceRead() * smooth + distancia1 * (1 - smooth);
@@ -97,12 +93,12 @@ void receiveData(int byteCount) {
   while (Wire.available() > 0) {
 
     val = Wire.read();
-    //Serial.println(val);
+    Serial.println(val);
     if (val == 13) {
       //digitalWrite(13, HIGH);
       resgate = true;
     }
-    if (val == -1) {
+    if (val == 1) {
       resgate = false;
     }
     if (val == 10) {
@@ -175,5 +171,4 @@ void sendData() {
   }
   return linha[0];
   }*/
-
 
