@@ -30,6 +30,7 @@
 #define SMOOTH_K 0.2 // Costante do Exponential Smoothing, usado no giroscópio
 #define A_MOTOR_OFFSET 1 // Ajuste do offset no motor A
 #define B_MOTOR_OFFSET 1 // Ajuste do offset no motor B
+#define LF_MSG 1 // Mensagem I2C para ficar no modo de seguir linha
 
 bool resgate = false; // Armazena o estado do resgate
 bool corrigido = false; // Armazena o estado da correção
@@ -74,8 +75,12 @@ task main
 		displayCenteredBigTextLine(5, "%d | %d", estado, linha);
 		//stopUs();
 	}*/
+	while(1){
+		i2c_msg(1, 1, 13, 0, 0, 0, 30);
+		displayCenteredBigTextLine(5, "VALS: %d | %d", linha, estado);
+	}
 	// Manda mensagem para o Arduino sair do modo de resgate
-	i2c_msg(2, 8, -1, 0, 0, 0, 30);
+	i2c_msg(2, 8, 1, 0, 0, 0, 30);
 	//obstaculo(5);
 	// Calibra o limiar de branco
 	calibrateThresh();
@@ -88,7 +93,7 @@ task main
 			}
 			if(resgateCount > 0){
 				walk(TURN_SPEED_90, TURN_TIME_90/2);
-				read_line_sensor(-1);
+				read_line_sensor(1);
 				if(estado == 3)
 					resgateMode();
 					//resgateCount = 0;
