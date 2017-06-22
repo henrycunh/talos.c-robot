@@ -1,7 +1,8 @@
+
 #include <Wire.h>
 #include <SoftwareSerial.h>
-#include <Ultrasonic.h>
 #include <TimerOne.h>
+#include <Ultrasonic.h>
 
 #define SLAVE_ADDRESS 0x04
 //define o endereço I2C escravo do arduino como 4 em hexadecimal

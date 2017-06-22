@@ -23,7 +23,8 @@ ser = serial.Serial(arduino_ports[0], 9600)
 time.sleep(0.1)
 
 while 1:
-	val = randint(0,127)
+	val = randint(0,9)
+	val = bytes([int(val)])
 	print(val)	
-	ser.write(bytes([val]))
+	ser.write(val)
 	time.sleep(0.3)

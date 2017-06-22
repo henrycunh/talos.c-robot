@@ -3,20 +3,38 @@ from picamera import PiCamera
 import cv2
 import time
 import serial
+import serial.tools.list_ports
 import numpy as np
 
-# RESOLUÇÃO DA CAPUTRA
+# RESOLUCAO DA CAPUTRA
 width = 320
 height = 240
 # PORTA SERIAL
-ser = serial.Serial('/dev/ttyACM2', 9600)
-# INICIALIZAÇÃO DA CAMERA
+
+arduino_ports = [
+    p.device
+    for p in serial.tools.list_ports.comports()
+    if 'ACM' in p.description
+]
+
+while not arduino_ports:
+    arduino_ports = [
+        p.device
+        for p in serial.tools.list_ports.comports()
+        if 'ACM' in p.description
+    ]
+    print ("No Arduino found")
+
+
+ser = serial.Serial(arduino_ports[0], 9600)
+# INICIALIZACAO DA CAMERA
 camera = PiCamera()
 camera.resolution = (width, height)
 camera.framerate = 32
 
 minim = 0
 inic = 300
+valAnterior = 0
 teste = True
 
 rawCapture = PiRGBArray(camera, size=(width, height))
@@ -36,17 +54,17 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         lower_blue = np.array([0, 0, 0])
         upper_blue = np.array([255,255,255]) 
 
-        # CONVERSÃO DE RGB PARA HSV
+        # CONVERSAO DE RGB PARA HSV
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        # MÁSCARA BASEADA NO RANGE
+        # MASCARA BASEADA NO RANGE
         mask = cv2.inRange(hsv, lower_blue, upper_blue)
-        # RESULTADO A PARTIR DA APLICAÇÃO DA MASCARA
+        # RESULTADO A PARTIR DA APLICACAO DA MASCARA
         res = cv2.bitwise_and(image, image, mask = mask)
         # BORRANDO UM POUCO A IMAGEM
         # TIREI O BLUR PORQUE ELE DEIXAVA A BOLINHA MUITO POUCO NITIDA
         img = res
         
-        # APLICAÇÃO DE FILTRAGEM DE CORES
+        # APLICACAO DE FILTRAGEM DE CORES
         imgg = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         clahe = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(8,8))
         img2 = clahe.apply(imgg)
@@ -63,12 +81,10 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                 hlimitm = 0
                 wlimitM = width
                 wlimitm = 0
-                cv2.imshow('resultstream', img2)
-                cv2.imshow('resultstream1', imgg)
                 try:
                         valx = bytes([int(0)])
                         ser.write(valx)
-                        print (valx)
+                        print (int(0))
                         #ser.write(i[0])
                         time.sleep(0.05)
                 except ser.SerialTimeoutException:
@@ -92,14 +108,15 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                        i1 = i[1]
                        i2 = i[2]
                        lhf = lh
-               a = a + 1
-               if a > 3 :
+               
+               if a == 1 :
                        break
+               a += 1
                try:
                         valx = bytes([int(round(lh))])
                         ser.write(valx)
-                        print (valx)
-                        #ser.write(i[0])
+                        print (int(round(lh)))
+                        
                         time.sleep(0.05)
                except ser.SerialTimeoutException:
                         print('Data could not be read')
@@ -108,8 +125,9 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                cv2.circle(img2,(i0,i1),2,(0,0,255),3)    
                cv2.imshow('resultstream', img2)
                cv2.imshow('resultstream1', imgg)
+        key = cv2.waitKey(5)
         if key == ord('q'):
             break
-        cv2.waitKey(5)
+        
 
 cv2.destroyAllWindows()
