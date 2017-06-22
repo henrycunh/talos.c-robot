@@ -227,17 +227,17 @@ int obstaculo(int range){
    	// Vira 90° para direita
 		turning(false);
 		//stopUs();
-		read_line_sensor(-1);
+		read_line_sensor(1);
 		int contador = 0;
 		while(contador < 60){
-			read_line_sensor(-1);
+			read_line_sensor(1);
 			motor[motorA] = - 15;
    		motor[motorB] = - 45;
    		contador++;
 		}
-		read_line_sensor(-1);
+		read_line_sensor(1);
 		while(estado != 4){
-			read_line_sensor(-1);
+			read_line_sensor(1);
 			motor[motorA] = - 15;
    		motor[motorB] = - 45;
 		}
