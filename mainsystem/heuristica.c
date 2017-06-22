@@ -77,6 +77,18 @@ void greenTurn(bool side){
 }
 
 /**
+ * Faz a virada de 90°
+ * -------------------------------------
+ * @param | [bool] side | Lado da curva
+ */
+void turning(bool side){
+	gExit();
+	print("GREEN TURN");
+	walk(TURN_SPEED_90, TURN_TIME_90);
+	turn(50, side);
+}
+
+/**
  * Sai do estado atual, dado o estado
  * e uma direção - frente ou ré
  * ------------------------------------------
@@ -185,33 +197,36 @@ int heuristica(int cor){
  * ----------------------------------------------------------
  * @param | [int] range | Alcançe mínimo para ativar o desvio
  */
- int obstaculo(int range){
-   // Checa pela colisão
-   if(getIRDistance(infraR) < range){
-     	// Vira 90° para direita
-			greenTurn(false);
-			// Anda para frente
-			walk(TURN_SPEED_90, TURN_TIME_90*4);
-			// Vira 90° para esquerda
-			greenTurn(true);
-			// Anda para frente
-			walk(TURN_SPEED_90, TURN_TIME_90*12);
-			// Vira 90° para esquerda
-			greenTurn(true);
-			// Se estiver fora da linha, vai para frente até que esteja
-			read_line_sensor(1);
-			while(estado == 3){
-				setSpeed(-30, -30);
-				read_line_sensor(1);
-			}
-			// Vira 90° para direita
-			greenTurn(false);
-			// Anda para trás
-			walk(-TURN_SPEED_90, TURN_TIME_90*4);
-			return 1;
+int obstaculo(int range){
+ // Checa pela colisão
+ if(getIRDistance(infraR) < range){
+   	//Anda até ficar na distância certa em relação ao obstáculo
+ 		int distanceInf = getIRDistance(infraR);
+   	while(distanceInf - SET_POINT_INFRA > 3 || distanceInf - SET_POINT_INFRA < -3){
+   		motor[motorA] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
+   		motor[motorB] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
+   		distanceInf = getIRDistance(infraR);
+  	}
+  	//walk(-TURN_SPEED_90, TURN_TIME_90*4);
+   	// Vira 90° para direita
+		turning(false);
+		//stopUs();
+		read_line_sensor(-1);
+		int contador = 0;
+		while(contador < 90){
+			read_line_sensor(-1);
+			motor[motorA] = - 15;
+   		motor[motorB] = - 45;
+   		contador++;
 		}
-		return 0;
- }
+		turning(false);
+		corrigir(5);
+		// Anda para trás
+		walk(-TURN_SPEED_90, TURN_TIME_90*4);
+		return 1;
+	}
+	return 0;
+}
 
 /**
  * Realiza as funções de Line Following
@@ -221,17 +236,12 @@ int lineFollowing(){
 		// Faz a leitura da linha e do verde
 		int sensor = read_line_sensor(1);
 		int cor = read_color_sensor();
-		if(gyro > GYRO_THRESH_MAX || gyro < GYRO_THRESH_MIN){
-			int erro = PID(sensor, OFFSET, KP, SET_POINT);
-			eraseDisplay();
-			displayCenteredBigTextLine(1, "PID RAMPA: %d | %d", erro, gyro);
-			return 0;
-		}
+
 		// Checa pelo resgate
 		if (resgate)
 			return 0;
 		// Checa por um obstáculo
-		obstaculo(1);
+		obstaculo(25);
 		// Checa pelo verde
 		switch(cor){
 			case 1:	// Vira para direita
@@ -270,21 +280,8 @@ int lineFollowing(){
 			int sensor = read_line_sensor(1);
 			int erro = PID(sensor, OFFSET, KP, SET_POINT);
 			eraseDisplay();
-			displayCenteredBigTextLine(1, "PID RAMPA: %d | %d", erro, gyro);
-			// Caso entre na quantidade máxima de iterações, entra no resgate
-			if(resgateCount == 15)
-				stopUs();
-			// Caso esteja fora de uma linha, e em superfície irregular
-			if(estado == 3 && offRoad){
-				// Adiciona um ao contador de resgate
-				resgateCount++;
-				displayCenteredBigTextLine(10, "OFFROAD");
-			}
-			// Caso o alarme seja falso e seja apenas um obstáculo
-			if(!offRoad)
-				resgateCount = 0;
-			// Se o estado for igual a 3, define superfície irregular
-			offRoad = estado == 3 ? true : false;
+			displayCenteredBigTextLine(1, "RAMPA: %d | %d", erro, gyro);
+			displayCenteredBigTextLine(5, "RAMPA: %d | %d", garantiaRampa, resgateCount);
 			return 1;
 		}
 		return 0;

@@ -16,6 +16,7 @@
 #define KI 0.0 // Constante de Integral do PID
 #define KD 0.2 // Constante Derivativa do PID
 #define SET_POINT 65 // Ponto intermediário das leituras do sensor QTR8
+#define SET_POINT_INFRA 2 //Ponto que o robô tenta se estabilizar nas leituras do sensor infravermelho
 #define OFFSET -18 // Offset de Velocidade do PID
 #define TURN_TIME_90 60 // Tempo da virada na curva de 90°
 #define TURN_SPEED_90 30 // Velocidade da virada na curva de 90°
@@ -38,6 +39,7 @@ int linha; // Armazena posição do sensor QTR8-A | Lim: 0 - 127
 int estado; // Armazena estado do sensor | {1, 2, 3, 4}
 int gyro = 1; // Armazena a angulação do robô
 int resgateCount = 0; // Armazena o contador para entrar no resgate
+int garantiaRampa = 0; //Garante que a entrada na rampa não é apenas uma flutuação
 long coresA[3]; // Armazena as cores do sensor de cor direito
 long coresB[3]; // Armazena as cores do sensor de cor esquerdo
 TI2CStatus mI2CStatus; // Armazena o status do sensor
@@ -51,19 +53,42 @@ byte sendMsg[10]; // Armazena a mensagem a ser enviada
 #include "sensors.c"
 #include "heuristica.c"
 
+// RESGATE
+void resgateMode(void){
+	walk(TURN_SPEED_90, TURN_TIME_90*3);
+	turn(25, 0);
+	walk(TURN_SPEED_90, TURN_TIME_90*10);
+	stopUs();
+
+}
+
 // ESCOPO PRINCIPAL
 task main
 {
 	// Manda mensagem para o Arduino sair do modo de resgate
 	i2c_msg(2, 8, -1, 0, 0, 0);
+	//obstaculo(5);
 	// Calibra o limiar de branco
 	calibrateThresh();
 	// Loop principal
 	while(1){
 			// Caso esteja na rampa
-			if(checkRampa())
+			if(checkRampa()){
+				garantiaRampa++;
 				continue;
+			}
+			if(resgateCount > 5){
+				walk(TURN_SPEED_90, TURN_TIME_90/2);
+				read_line_sensor(-1);
+				if(estado == 3)
+					resgateMode();
+					//resgateCount = 0;
+			}
 			// Executa a função de seguir linhas
 			lineFollowing();
+			if(garantiaRampa > 100){
+				resgateCount++;
+				displayCenteredBigTextLine(5, "RAMPA: %d | %d", garantiaRampa, resgateCount);
+			}
 	}
 }
