@@ -22,7 +22,9 @@
 #define TURN_SPEED_90 30 // Velocidade da virada na curva de 90°
 #define TURN_ERRO_K 8 // Erro permitido na virada da curva de 90°
 #define IMAGE_KP 0.2 // Constante proporcional da busca no resgate
-#define IMAGE_SETPOINT 47 // Ponto intermediário da busca no resgate
+#define IMAGE_SETPOINT 20 // Ponto intermediário da busca no resgate
+#define IMAGE_ERRO 10 // Erro tolerável de alinhamento em relação à bolinha
+#define IMAGE_OFFSET 8 // Velocidade de aproximação no resgate
 #define COLOR_ERRO 6 // Erro permitido da cor durante a calibração
 #define INT_COUNT_MAX 20 // Máximo de iterações da saida de estado
 #define GYRO_THRESH_MAX 15 // Limiar máximo do giroscópio
@@ -61,26 +63,27 @@ byte sendMsg[10]; // Armazena a mensagem a ser enviada
 void resgateMode(void){
 	walk(TURN_SPEED_90, TURN_TIME_90*3);
 	turn(25, 0);
-	walk(TURN_SPEED_90, TURN_TIME_90*10);
-	stopUs();
+	walk(TURN_SPEED_90, TURN_TIME_90*20);
+	i2c_msg(2, 8, 13, 0, 0, 0, 30);
+	displayCenteredBigTextLine(1, "RESGATE");
+	displayCenteredBigTextLine(5, "%d | %d", estado, linha);
+
 
 }
 
 // ESCOPO PRINCIPAL
 task main
 {
-	/*while(1){
-		read_line_sensor(-1);
-		displayCenteredBigTextLine(1, "ULTRASONICOS");
-		displayCenteredBigTextLine(5, "%d | %d", estado, linha);
-		//stopUs();
-	}*/
-	while(1){
-		i2c_msg(1, 1, 13, 0, 0, 0, 30);
-		displayCenteredBigTextLine(5, "VALS: %d | %d", linha, estado);
-	}
 	// Manda mensagem para o Arduino sair do modo de resgate
 	i2c_msg(2, 8, 1, 0, 0, 0, 30);
+	while(1){
+		i2c_msg(2, 8, 13, 0, 0, 0, 30);
+		searchBall();
+		displayCenteredBigTextLine(1, "RESGATE");
+		displayCenteredBigTextLine(5, "%d | %d", estado, linha);
+	}
+
+	//stopUs();
 	//obstaculo(5);
 	// Calibra o limiar de branco
 	calibrateThresh();

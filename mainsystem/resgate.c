@@ -231,18 +231,18 @@ task main()
 	// Resgate Original
 	while(1){
 		displayBigTextLine(1, "%d", read_camera());
-		linha = read_line_sensor();
 		//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
-			if ((linha <IMAGE_SETPOINT + IMAGE_ERRO) && (linha >= IMAGE_SETPOINT - IMAGE_ERRO)){
-					walk(10, 20);
-				}else if (linha > IMAGE_SETPOINT){
-					motor[motorA] = IMAGE_OFFSET;
-					motor[motorB] = -IMAGE_OFFSET;
-				}else{
-					motor[motorA] = -IMAGE_OFFSET;
-					motor[motorB] = IMAGE_OFFSET;
-				}
+			if ((estado <IMAGE_SETPOINT + IMAGE_ERRO) && (estado >= IMAGE_SETPOINT - IMAGE_ERRO)){
+				motor[motorA] = 0;
+				motor[motorB] = 0;
+			}else if (estado > IMAGE_SETPOINT){
+				motor[motorA] = IMAGE_OFFSET;
+				motor[motorB] = -IMAGE_OFFSET;
+			}else{
+				motor[motorA] = -IMAGE_OFFSET;
+				motor[motorB] = IMAGE_OFFSET;
 			}
+		}
 		wait1Msec(50);
 
 }

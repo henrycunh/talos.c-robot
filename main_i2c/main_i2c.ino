@@ -43,11 +43,16 @@ int callback() {
   if (resgate) {
 
     buffer1[0] = Serial.read();
-    linha[0] = buffer1[0];
-    linha[0] = constrain(linha[0], 0, 127);
     buffer1[1] = Serial.read();
-    linha[1] = buffer1[1];
-    linha[1] = constrain(linha[1], 0, 127);
+    if(buffer1[0] != -1){
+      linha[0] = buffer1[0];
+      linha[0] = constrain(linha[0], 0, 127);
+    }
+    if(buffer1[1] != -1){
+      linha[1] = buffer1[1];
+      linha[1] = constrain(linha[1], 0, 127);
+    }
+    return 0;
   } else if (ultra) {
     //Captura o valor do sensor ultrasonico esquerdo
     distancia1 = ultrasonic1.distanceRead() * smooth + distancia1 * (1 - smooth);
@@ -171,4 +176,5 @@ void sendData() {
   }
   return linha[0];
   }*/
+
 

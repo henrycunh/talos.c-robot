@@ -46,6 +46,16 @@ void gap(){
 	}
 }
 
+void searchBall(){
+	//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
+	if ((estado < IMAGE_SETPOINT + IMAGE_ERRO) && (estado >= IMAGE_SETPOINT - IMAGE_ERRO)){
+		setSpeed(0, 0);
+	}else if (estado > IMAGE_SETPOINT){
+		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
+	}else{
+		setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
+	}
+}
 
 /**
  * Movimenta o robô para a frente até
