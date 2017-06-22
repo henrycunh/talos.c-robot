@@ -15,7 +15,7 @@
  * @param | [int] message_size                | Tamanho da mensagem a ser enviada
  * @param | [byte] byte1, byte2, byte3, byte4 | Bytes a serem enviados como mensagem
  */
-void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte3, byte byte4){
+void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte3, byte byte4, byte timeout){
 	// Pegando o status do sensor I2C
 	mI2CStatus = nI2CStatus[i2c];
 	// Reservando espaÃ§o na memÃ³ria para a resposta
@@ -34,7 +34,7 @@ void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte
 	// Enviando mensagem
 	sendI2CMsg(i2c, &sendMsg[0], 8);
 	// Esperar 30ms
-	wait1Msec(30);
+	wait1Msec(timeout);
 
 	// Ler resposta
 	readI2CReply(i2c, &replyMsg[0], reply_size);
@@ -43,6 +43,8 @@ void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte
 	// Resposta, analisando o erro de skip
 	linha = skip ? linha : replyMsg[0];
 	estado = skip ? estado : replyMsg[1];
+	ultra1 = replyMsg[4];
+	ultra2 = replyMsg[5];
 	// Aplica um Exponential Smoothing, caso não dê erro de skip
 	gyro = skip ? gyro : (SMOOTH_K * replyMsg[2]) + ((1-SMOOTH_K) * gyro);
 	// Espera a sincronização

@@ -135,6 +135,8 @@ int sairEstado(int mult, int std){
  * @param | [bool] dir | Lado da curva
  */
 int grade90(bool dir){
+	if (gyro > GYRO_THRESH_MAX*(2/3))
+		return 0;
 	print("GRADE 90");
 	read_line_sensor(1);
 	// Sai do estado atual
@@ -154,11 +156,22 @@ int grade90(bool dir){
 	}
 	read_line_sensor(1);
 	if(estado != 4){
-
+		int erro;
 		// Anda para trás
-		walk(-15,45);
-		// Corrige novamente
-		corrigir(5);
+		//walk(-15,22);
+		if(estado != 3){
+			do {
+				print("GRADE 90");
+				// Corrige até que o erro esteja dentro do definido
+				erro = PID(read_line_sensor(1), -OFFSET/2, KP, SET_POINT);
+			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
+		}
+		else{
+			// Anda para trás
+			walk(-15,22);
+			// Corrige novamente
+			corrigir(5);
+		}
 	}
 	return 0;
 }
@@ -198,6 +211,8 @@ int heuristica(int cor){
  * @param | [int] range | Alcançe mínimo para ativar o desvio
  */
 int obstaculo(int range){
+	if (obst)
+		return 0;
  // Checa pela colisão
  if(getIRDistance(infraR) < range){
    	//Anda até ficar na distância certa em relação ao obstáculo
@@ -207,22 +222,30 @@ int obstaculo(int range){
    		motor[motorB] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
    		distanceInf = getIRDistance(infraR);
   	}
-  	//walk(-TURN_SPEED_90, TURN_TIME_90*4);
+  	walk(-TURN_SPEED_90, TURN_TIME_90*2);
+  	corrigir(5);
    	// Vira 90° para direita
 		turning(false);
 		//stopUs();
 		read_line_sensor(-1);
 		int contador = 0;
-		while(contador < 90){
+		while(contador < 60){
 			read_line_sensor(-1);
 			motor[motorA] = - 15;
    		motor[motorB] = - 45;
    		contador++;
 		}
+		read_line_sensor(-1);
+		while(estado != 4){
+			read_line_sensor(-1);
+			motor[motorA] = - 15;
+   		motor[motorB] = - 45;
+		}
 		turning(false);
-		corrigir(5);
+		//corrigir(5);
 		// Anda para trás
 		walk(-TURN_SPEED_90, TURN_TIME_90*4);
+		obst = true;
 		return 1;
 	}
 	return 0;
@@ -241,7 +264,7 @@ int lineFollowing(){
 		if (resgate)
 			return 0;
 		// Checa por um obstáculo
-		obstaculo(25);
+		obstaculo(18);
 		// Checa pelo verde
 		switch(cor){
 			case 1:	// Vira para direita

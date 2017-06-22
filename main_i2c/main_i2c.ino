@@ -8,8 +8,8 @@
 
 SoftwareSerial mySerial(7, 6);
 //define que as portas RX, TX de software serão, respectivamente 7 e 6
-Ultrasonic ultrasonic1(11, 8);
-Ultrasonic ultrasonic2(10, 9);
+Ultrasonic ultrasonic1(11, 8, 4000UL);
+Ultrasonic ultrasonic2(10, 9, 4000UL);
 
 byte val = 0;
 bool resgate = false;
@@ -39,7 +39,7 @@ void setup() {
 }
 
 
-void callback() {
+int callback() {
   if (resgate) {
 
     buffer1[0] = Serial.read();
@@ -57,8 +57,11 @@ void callback() {
     distancia1 = ultrasonic1.distanceRead() * smooth + distancia1 * (1 - smooth);
     //Captura o valor do sensor ultrasonico direito
     distancia2 = ultrasonic2.distanceRead() * smooth + distancia2 * (1 - smooth);
-    linha[3] = constrain((int)distancia1, 0, 127);
-    linha[4] = constrain((int)distancia2, 0, 127);
+    linha[0] = constrain((int)distancia1, 0, 127);
+    linha[1] = constrain((int)distancia2, 0, 127);
+    Serial.println(linha[4]);
+    return 0;
+    ultra = false;
   } else {
     if (mySerial.available()) {
       byte leitura = mySerial.read();
@@ -79,7 +82,7 @@ void callback() {
     }
 
   }
-
+  return 0;
 }
 
 void loop() {
@@ -146,6 +149,13 @@ void sendData() {
   //Serial.print("Wire:");
   //Serial.println(linha[0]);
   //linha[0] = buffer1[0];
+  //Captura o valor do sensor ultrasonico esquerdo
+  /*distancia1 = ultrasonic1.distanceRead() * smooth + distancia1 * (1 - smooth);
+  //Captura o valor do sensor ultrasonico direito
+  distancia2 = ultrasonic2.distanceRead() * smooth + distancia2 * (1 - smooth);
+  linha[0] = constrain((int)distancia1, 0, 127);
+  linha[1] = constrain((int)distancia2, 0, 127);
+  Serial.println(linha[1]);*/
   Wire.write(linha, 8);
 
   //

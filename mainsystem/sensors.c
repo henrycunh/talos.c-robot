@@ -10,9 +10,16 @@
  * L? os valores dos sensores ligados ao Arduino
  */
 int read_line_sensor(byte byte1){
-	i2c_msg(8,3,byte1,0,0,0);
+	i2c_msg(8,3,byte1,0,0,0,30);
 	int value = linha;
 	return value;
+}
+
+/**
+ * L? os valores dos sensores ligados ao Arduino
+ */
+int get_ultra_value(){
+	i2c_msg(8,3,10,0,0,0,100);
 }
 
 

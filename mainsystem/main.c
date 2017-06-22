@@ -25,8 +25,8 @@
 #define IMAGE_SETPOINT 47 // Ponto intermediário da busca no resgate
 #define COLOR_ERRO 6 // Erro permitido da cor durante a calibração
 #define INT_COUNT_MAX 20 // Máximo de iterações da saida de estado
-#define GYRO_THRESH_MAX 10 // Limiar máximo do giroscópio
-#define GYRO_THRESH_MIN -20 // Limiar mínimo do giroscópio
+#define GYRO_THRESH_MAX 15 // Limiar máximo do giroscópio
+#define GYRO_THRESH_MIN -30 // Limiar mínimo do giroscópio
 #define SMOOTH_K 0.2 // Costante do Exponential Smoothing, usado no giroscópio
 #define A_MOTOR_OFFSET 1 // Ajuste do offset no motor A
 #define B_MOTOR_OFFSET 1 // Ajuste do offset no motor B
@@ -34,9 +34,12 @@
 bool resgate = false; // Armazena o estado do resgate
 bool corrigido = false; // Armazena o estado da correção
 bool offRoad = false; // Armazena o estado do robô em relação ao terreno
+bool obst = false // Armazena se o obstaculo já foi superado
 int limiarWhite[2][3]; // Armazena os limiares da cor branca
 int linha; // Armazena posição do sensor QTR8-A | Lim: 0 - 127
 int estado; // Armazena estado do sensor | {1, 2, 3, 4}
+int ultra1; // Armazena o valor do primeiro sensor ultrasonico
+int ultra2; // Armazena o valor do segundo sensor ultrasonico
 int gyro = 1; // Armazena a angulação do robô
 int resgateCount = 0; // Armazena o contador para entrar no resgate
 int garantiaRampa = 0; //Garante que a entrada na rampa não é apenas uma flutuação
@@ -65,8 +68,14 @@ void resgateMode(void){
 // ESCOPO PRINCIPAL
 task main
 {
+	/*while(1){
+		read_line_sensor(-1);
+		displayCenteredBigTextLine(1, "ULTRASONICOS");
+		displayCenteredBigTextLine(5, "%d | %d", estado, linha);
+		//stopUs();
+	}*/
 	// Manda mensagem para o Arduino sair do modo de resgate
-	i2c_msg(2, 8, -1, 0, 0, 0);
+	i2c_msg(2, 8, -1, 0, 0, 0, 30);
 	//obstaculo(5);
 	// Calibra o limiar de branco
 	calibrateThresh();
@@ -77,7 +86,7 @@ task main
 				garantiaRampa++;
 				continue;
 			}
-			if(resgateCount > 5){
+			if(resgateCount > 0){
 				walk(TURN_SPEED_90, TURN_TIME_90/2);
 				read_line_sensor(-1);
 				if(estado == 3)
