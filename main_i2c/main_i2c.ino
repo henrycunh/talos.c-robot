@@ -172,4 +172,3 @@ void sendData() {
   return linha[0];
   }*/
 
-
