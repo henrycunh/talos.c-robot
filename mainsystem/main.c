@@ -27,12 +27,11 @@
 #define IMAGE_OFFSET 8 // Velocidade de aproximação no resgate
 #define COLOR_ERRO 6 // Erro permitido da cor durante a calibração
 #define INT_COUNT_MAX 20 // Máximo de iterações da saida de estado
-#define GYRO_THRESH_MAX 15 // Limiar máximo do giroscópio
-#define GYRO_THRESH_MIN -30 // Limiar mínimo do giroscópio
 #define SMOOTH_K 0.2 // Costante do Exponential Smoothing, usado no giroscópio
 #define A_MOTOR_OFFSET 1 // Ajuste do offset no motor A
 #define B_MOTOR_OFFSET 1 // Ajuste do offset no motor B
 #define LF_MSG 1 // Mensagem I2C para ficar no modo de seguir linha
+#define DISTANCE 30 //Distância de entrada
 
 bool resgate = false; // Armazena o estado do resgate
 bool corrigido = false; // Armazena o estado da correção
@@ -44,6 +43,7 @@ int estado; // Armazena estado do sensor | {1, 2, 3, 4}
 int ultra1; // Armazena o valor do primeiro sensor ultrasonico
 int ultra2; // Armazena o valor do segundo sensor ultrasonico
 int gyro = 1; // Armazena a angulação do robô
+int gyroV[2];
 int resgateCount = 0; // Armazena o contador para entrar no resgate
 int garantiaRampa = 0; //Garante que a entrada na rampa não é apenas uma flutuação
 long coresA[3]; // Armazena as cores do sensor de cor direito
@@ -67,7 +67,12 @@ void resgateMode(void){
 	i2c_msg(2, 8, 13, 0, 0, 0, 30);
 	displayCenteredBigTextLine(1, "RESGATE");
 	displayCenteredBigTextLine(5, "%d | %d", estado, linha);
-
+	entry();
+	while(!searchBall()){
+		i2c_msg(2, 8, 13, 0, 0, 0, 300);
+		searchBall();
+	}
+	stopUs();
 
 }
 
@@ -76,11 +81,12 @@ task main
 {
 	// Manda mensagem para o Arduino sair do modo de resgate
 	i2c_msg(2, 8, 1, 0, 0, 0, 30);
-	while(1){
+	while(0){
 		i2c_msg(2, 8, 13, 0, 0, 0, 30);
 		searchBall();
 		displayCenteredBigTextLine(1, "RESGATE");
 		displayCenteredBigTextLine(5, "%d | %d", estado, linha);
+		stopUs();
 	}
 
 	//stopUs();
@@ -95,7 +101,8 @@ task main
 				continue;
 			}
 			if(resgateCount > 0){
-				walk(TURN_SPEED_90, TURN_TIME_90/2);
+				if (estado != 4)
+					walk(TURN_SPEED_90, TURN_TIME_90/2);
 				read_line_sensor(1);
 				if(estado == 3)
 					resgateMode();

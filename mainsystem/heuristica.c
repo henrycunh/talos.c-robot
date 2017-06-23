@@ -46,15 +46,17 @@ void gap(){
 	}
 }
 
-void searchBall(){
+int searchBall(){
 	//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
-	if ((estado < IMAGE_SETPOINT + IMAGE_ERRO) && (estado >= IMAGE_SETPOINT - IMAGE_ERRO)){
+	if ((linha < IMAGE_SETPOINT + IMAGE_ERRO) && (linha >= IMAGE_SETPOINT - IMAGE_ERRO)){
 		setSpeed(0, 0);
-	}else if (estado > IMAGE_SETPOINT){
+		return 1;
+	}else if (linha > IMAGE_SETPOINT){
 		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
 	}else{
 		setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
 	}
+	return 0;
 }
 
 /**
@@ -145,48 +147,74 @@ int sairEstado(int mult, int std){
  * @param | [bool] dir | Lado da curva
  */
 int grade90(bool dir){
-	if (gyro > GYRO_THRESH_MAX*(2/3))
+	if (gyro > gyroV[0])
 		return 0;
 	print("GRADE 90");
 	read_line_sensor(1);
 	// Sai do estado atual
 	// Garante que a detecção de 90º não é um falso positivo
-	if(estado != 4)
+	if(estado != 4){
+		if (gyro > gyroV[0])
+			return 0;
 		sairEstado(-1, 3);
+	}
 	// Se estiver fora da linha
 	if(estado == 3){
+		read_line_sensor(1);
 		int erro;
 		// Vira um pouco para o lado contrário
 		turn(15, dir);
-		do {
-			print("GRADE 90");
-			// Corrige até que o erro esteja dentro do definido
-			erro = PID(read_line_sensor(1), OFFSET/2, KP, SET_POINT);
-		}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
+		bool testeL = dir? ( linha > SET_POINT? false : true ) : ( linha < SET_POINT? false : true);
+		if (testeL) {
+			do {
+				print("GRADE 90");
+				// Corrige até que o erro esteja dentro do definido
+				erro = PID(read_line_sensor(1), OFFSET/2, KP, SET_POINT);
+			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
+		}else{
+			do {
+				print("GRADE 90");
+				// Corrige até que o erro esteja dentro do definido
+				turn(1, !dir);
+			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
+		}
 	}
 	read_line_sensor(1);
-	if(estado != 4){
+	int erro = read_line_sensor(1) - SET_POINT;
+	if(erro > 20 || erro < -20){
 		int erro;
 		// Anda para trás
 		//walk(-15,22);
 		if(estado != 3){
 			do {
-				print("GRADE 90");
+				print("CORRIGINDO PARA TRÁS");
 				// Corrige até que o erro esteja dentro do definido
 				erro = PID(read_line_sensor(1), -OFFSET/2, KP, SET_POINT);
 			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
 		}
 		else{
-			// Anda para trás
-			walk(-15,22);
+			while(estado == 3){
+				print("BACKWARDS");
+				read_line_sensor(1);
+				// Anda para trás
+				// Anda para frente, dado o multiplicador
+				setSpeed(20, 20);
 			// Corrige novamente
+			}
 			corrigir(5);
 		}
 	}
 	return 0;
 }
 
-
+// Entrada na arena
+void entry(){
+	int distancia = getIRDistance(infraR);
+	while((distancia - DISTANCE > 5) || (distancia - DISTANCIA < -5)){
+		setSpeed(-KP*(distancia - DISTANCE) - (KP/2)*(distancia - DISTANCE),-KP*(distancia - DISTANCE)+(KP/2)*(distancia - DISTANCE));
+		distancia = getIRDistance(infraR);
+	}
+}
 /**
  * Controla o comportamento de heurística
  * como curvas de 90° e detecção de áreas verde
@@ -239,16 +267,16 @@ int obstaculo(int range){
 		//stopUs();
 		read_line_sensor(1);
 		int contador = 0;
-		while(contador < 60){
+		while(contador < 80){
 			read_line_sensor(1);
-			motor[motorA] = - 15;
+			motor[motorA] = - 20;
    		motor[motorB] = - 45;
    		contador++;
 		}
 		read_line_sensor(1);
 		while(estado != 4){
 			read_line_sensor(1);
-			motor[motorA] = - 15;
+			motor[motorA] = - 20;
    		motor[motorB] = - 45;
 		}
 		turning(false);
@@ -308,7 +336,7 @@ int lineFollowing(){
  */
  int checkRampa(void){
    	// Checa se o robô está no limite
-		if(gyro > GYRO_THRESH_MAX || gyro < GYRO_THRESH_MIN){
+		if(gyro > gyroV[0] || gyro < gyroV[1]){
 			// Executa o PID
 			int sensor = read_line_sensor(1);
 			int erro = PID(sensor, OFFSET, KP, SET_POINT);
