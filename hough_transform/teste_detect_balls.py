@@ -74,23 +74,39 @@ for i in range(1, 14):
     image = cv2.bilateralFilter(image,BF_D,BF_SIGMA_COLOR,BF_SIGMA_SPACE)
 
     # Aplicando threshold
-    thresh = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 4)
+    thresh = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 4)
     
     kernel = np.ones((KERNEL,KERNEL),np.uint8)
-    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+    # thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
     thresh = cv2.medianBlur(thresh, M_BLUR)
     
     color = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     # Pegando contornos
-    _, contours,_ = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    dst = cv2.addWeighted(thresh,0.5,image,0.5,0)
     
-    # Desenhando contours
-    cv2.drawContours(color,contours,-1,(0,255,0),2)
+    circles = cv2.HoughCircles(dst,cv2.HOUGH_GRADIENT,1,15,param1=200,param2=40,minRadius=15,maxRadius=0)
+
+    cv2.imshow("Display", thresh)
+    cv2.imshow("DisplayC", dst)
     cv2.waitKey()
-    # DISPOSICAO
-    #cv2.imshow("Display", thresh)
-    cv2.imshow("DisplayC", color)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+    # circles = np.uint16(np.around(circles))
+    if circles is None: 
+        print "none"
+        continue
+    for i in circles[0,:]:
+        print("%d" + str(i))
+        # draw the outer circle
+        cv2.circle(color,(i[0],i[1]),i[2],(0,255,0),2)
+        # draw the center of the circle
+        cv2.circle(color,(i[0],i[1]),2,(0,0,255),3)
+        cv2.imshow("DisplayCX", color)
+        
+    # Desenhando contours
+    
+    # DISPOSICAO
+    #cv2.imshow("Display", thresh)
+    
 cap.release()
 cv2.destroyAllWindows()

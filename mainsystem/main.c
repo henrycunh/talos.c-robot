@@ -22,9 +22,9 @@
 #define TURN_SPEED_90 30 // Velocidade da virada na curva de 90°
 #define TURN_ERRO_K 8 // Erro permitido na virada da curva de 90°
 #define IMAGE_KP 0.2 // Constante proporcional da busca no resgate
-#define IMAGE_SETPOINT 20 // Ponto intermediário da busca no resgate
+#define IMAGE_SETPOINT 70 // Ponto intermediário da busca no resgate
 #define IMAGE_ERRO 10 // Erro tolerável de alinhamento em relação à bolinha
-#define IMAGE_OFFSET 8 // Velocidade de aproximação no resgate
+#define IMAGE_OFFSET 4 // Velocidade de aproximação no resgate
 #define COLOR_ERRO 6 // Erro permitido da cor durante a calibração
 #define INT_COUNT_MAX 20 // Máximo de iterações da saida de estado
 #define GYRO_THRESH_MAX 15 // Limiar máximo do giroscópio
@@ -77,10 +77,23 @@ task main
 	// Manda mensagem para o Arduino sair do modo de resgate
 	i2c_msg(2, 8, 1, 0, 0, 0, 30);
 	while(1){
-		i2c_msg(2, 8, 13, 0, 0, 0, 30);
-		searchBall();
-		displayCenteredBigTextLine(1, "RESGATE");
-		displayCenteredBigTextLine(5, "%d | %d", estado, linha);
+		i2c_msg(2, 8, 13, 0, 0, 0, 300);
+		//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
+		//
+		if ((linha < IMAGE_SETPOINT + IMAGE_ERRO) && (linha >= IMAGE_SETPOINT - IMAGE_ERRO)){
+			displayCenteredBigTextLine(1, "CENTRO");
+			displayCenteredBigTextLine(5, "%d | %d", linha, estado);
+			setSpeed(0, 0);
+		} else if (linha > IMAGE_SETPOINT){
+			displayCenteredBigTextLine(1, "AJUSTE DIR.");
+			displayCenteredBigTextLine(5, "%d | %d", linha, estado);
+			setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
+		} else {
+			displayCenteredBigTextLine(1, "AJUSTE ESQUERDA");
+			displayCenteredBigTextLine(5, "%d | %d", linha, estado);
+			setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
+		}
+
 	}
 
 	//stopUs();

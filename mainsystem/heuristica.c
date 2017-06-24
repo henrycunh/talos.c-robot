@@ -51,9 +51,9 @@ void searchBall(){
 	if ((estado < IMAGE_SETPOINT + IMAGE_ERRO) && (estado >= IMAGE_SETPOINT - IMAGE_ERRO)){
 		setSpeed(0, 0);
 	}else if (estado > IMAGE_SETPOINT){
-		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
-	}else{
 		setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
+	}else{
+		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
 	}
 }
 
