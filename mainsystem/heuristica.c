@@ -50,10 +50,9 @@ int searchBall(){
 	//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
 	if ((linha < IMAGE_SETPOINT + IMAGE_ERRO) && (linha >= IMAGE_SETPOINT - IMAGE_ERRO)){
 		setSpeed(0, 0);
-		return 1;
-	}else if (linha > IMAGE_SETPOINT){
+	} else if (linha > IMAGE_SETPOINT){
 		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
-	}else{
+	} else {
 		setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
 	}
 	return 0;

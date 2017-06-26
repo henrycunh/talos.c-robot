@@ -41,8 +41,8 @@ void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte
 	// Checa por erro de skip na transmissão do I2C
 	bool skip = replyMsg[1] == 0;
 	// Resposta, analisando o erro de skip
-	linha = skip ? linha : replyMsg[0];
-	estado = skip ? estado : replyMsg[1];
+	linha = skip && !resgate ? linha : replyMsg[0];
+	estado = skip && !resgate ? estado : replyMsg[1];
 	ultra1 = replyMsg[3];
 	ultra2 = replyMsg[4];
 	// Aplica um Exponential Smoothing, caso não dê erro de skip

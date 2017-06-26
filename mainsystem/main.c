@@ -22,9 +22,9 @@
 #define TURN_SPEED_90 30 // Velocidade da virada na curva de 90°
 #define TURN_ERRO_K 8 // Erro permitido na virada da curva de 90°
 #define IMAGE_KP 0.2 // Constante proporcional da busca no resgate
-#define IMAGE_SETPOINT 20 // Ponto intermediário da busca no resgate
+#define IMAGE_SETPOINT 70 // Ponto intermediário da busca no resgate
 #define IMAGE_ERRO 10 // Erro tolerável de alinhamento em relação à bolinha
-#define IMAGE_OFFSET 8 // Velocidade de aproximação no resgate
+#define IMAGE_OFFSET 4 // Velocidade de aproximação no resgate
 #define COLOR_ERRO 6 // Erro permitido da cor durante a calibração
 #define INT_COUNT_MAX 20 // Máximo de iterações da saida de estado
 #define SMOOTH_K 0.2 // Costante do Exponential Smoothing, usado no giroscópio
@@ -88,10 +88,9 @@ task main
 		displayCenteredBigTextLine(5, "%d | %d", replyMsg[3], replyMsg[4]);
 		displayCenteredBigTextLine(10, "%d | %d", linha, estado);
 		//stopUs();
+
 	}
 
-	//stopUs();
-	//obstaculo(5);
 	// Calibra o limiar de branco
 	calibrateThresh();
 	// Loop principal
