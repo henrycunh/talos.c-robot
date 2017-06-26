@@ -19,11 +19,11 @@ MAX_VAL = 255 # Kernel do Closing
 THRESH_VAL = 104 # Median Blur
 AREA_MIN = 2500
 
-for i in range(1, 14): 
-    image = cv2.imread("sample/sample (%d).jpg" % (i))
-# Tire essas linhas do comentário para testar com a camera, e comente as acima
-# while True:
-#     _, image = cap.read();    
+# for i in range(1, 14): 
+#     image = cv2.imread("sample/sample (%d).jpg" % (i))
+# Tire essas linhas do comentario para testar com a camera, e comente as acima
+while True:
+    _, image = cap.read();    
     # RESIZE --------------------------
     height, width = image.shape[:2]
     height, width = (height/SAMPLE_SIZE, width/SAMPLE_SIZE)
@@ -63,7 +63,7 @@ for i in range(1, 14):
         
     cv2.imshow("DisplayC", thresh)
     cv2.imshow("Display", image)
-    cv2.waitKey()
+    # cv2.waitKey()
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
     
