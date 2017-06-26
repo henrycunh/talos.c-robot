@@ -69,7 +69,7 @@ void resgateMode(void){
 	displayCenteredBigTextLine(5, "%d | %d", estado, linha);
 	entry();
 	while(!searchBall()){
-		i2c_msg(2, 8, 13, 0, 0, 0, 300);
+		i2c_msg(2, 8, 1, 0, 0, 0, 300);
 		searchBall();
 	}
 	stopUs();
@@ -81,12 +81,13 @@ task main
 {
 	// Manda mensagem para o Arduino sair do modo de resgate
 	i2c_msg(2, 8, 1, 0, 0, 0, 30);
-	while(0){
-		i2c_msg(2, 8, 13, 0, 0, 0, 30);
-		searchBall();
-		displayCenteredBigTextLine(1, "RESGATE");
-		displayCenteredBigTextLine(5, "%d | %d", estado, linha);
-		stopUs();
+	while(1){
+		i2c_msg(8, 8, 10, 0, 0, 0, 300);
+		//searchBall();
+		displayCenteredBigTextLine(1, "ULTRA");
+		displayCenteredBigTextLine(5, "%d | %d", replyMsg[3], replyMsg[4]);
+		displayCenteredBigTextLine(10, "%d | %d", linha, estado);
+		//stopUs();
 	}
 
 	//stopUs();

@@ -48,5 +48,5 @@ void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte
 	// Aplica um Exponential Smoothing, caso não dê erro de skip
 	gyro = skip ? gyro : (SMOOTH_K * replyMsg[2]) + ((1-SMOOTH_K) * gyro);
 	// Espera a sincronização
-	wait1Msec(35);
+	wait1Msec(timeout);
 }
