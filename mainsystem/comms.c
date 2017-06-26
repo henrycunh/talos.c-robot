@@ -33,20 +33,20 @@ void i2c_msg(int reply_size, int message_size, byte byte1, byte byte2, byte byte
 
 	// Enviando mensagem
 	sendI2CMsg(i2c, &sendMsg[0], 8);
-	// Esperar 30ms
-	wait1Msec(timeout);
+	// Esperar um tempo
+	delay(timeout);
 
 	// Ler resposta
 	readI2CReply(i2c, &replyMsg[0], reply_size);
 	// Checa por erro de skip na transmissão do I2C
 	bool skip = replyMsg[1] == 0;
 	// Resposta, analisando o erro de skip
-	linha = skip ? linha : replyMsg[0];
-	estado = skip ? estado : replyMsg[1];
-	ultra1 = replyMsg[4];
-	ultra2 = replyMsg[5];
+	linha = skip && !resgate ? linha : replyMsg[0];
+	estado = skip && !resgate ? estado : replyMsg[1];
+	ultra1 = replyMsg[3];
+	ultra2 = replyMsg[4];
 	// Aplica um Exponential Smoothing, caso não dê erro de skip
 	gyro = skip ? gyro : (SMOOTH_K * replyMsg[2]) + ((1-SMOOTH_K) * gyro);
 	// Espera a sincronização
-	wait1Msec(35);
+	wait1Msec(timeout);
 }
