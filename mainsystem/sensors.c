@@ -49,6 +49,9 @@ void calibrateThresh(){
 				limiarWhite[a][b] = map(limiarWhite[a][b], 0, 90, 0, 255);
 			}
 		}
+		i2c_msg(5, 8, 1, 0, 0, 0, 30);
+		gyroV[0] = gyro + 20;
+		gyroV[1] = gyro - 20;
 
 	}
 }
