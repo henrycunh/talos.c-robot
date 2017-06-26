@@ -48,8 +48,25 @@ void gap(){
 
 int searchBall(){
 	//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
+	long tAtual = getMicroTimer();
+	if (linha == 0) {
+		if ((tAtual - timer) >= TIMER_ESPERA){
+
+		} else {
+			setSpeed(0, 0);
+		}
+	} else {
+		timer = tAtual;
+	}
 	if ((linha < IMAGE_SETPOINT + IMAGE_ERRO) && (linha >= IMAGE_SETPOINT - IMAGE_ERRO)){
-		setSpeed(0, 0);
+		setSpeed(0,0);
+		closeG();
+		cDown();
+		openG();
+		PIDAprox();
+		closeG();
+		back();
+		parseUP();
 	} else if (linha > IMAGE_SETPOINT){
 		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
 	} else {
@@ -254,12 +271,62 @@ int obstaculo(int range){
  if(getIRDistance(infraR) < range){
    	//Anda até ficar na distância certa em relação ao obstáculo
  		int distanceInf = getIRDistance(infraR);
-   	while(distanceInf - SET_POINT_INFRA > 3 || distanceInf - SET_POINT_INFRA < -3){
+   	while(distanceInf - SET_POINT_INFRA > 1 || distanceInf - SET_POINT_INFRA < -1){
    		motor[motorA] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
    		motor[motorB] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
    		distanceInf = getIRDistance(infraR);
   	}
-  	walk(-TURN_SPEED_90, TURN_TIME_90*2);
+  	read_line_sensor(1);
+  	if (estado == 3){
+  		walk(-TURN_SPEED_90, TURN_TIME_90*4);
+  		return 0;
+  	}else{
+  		walk(-TURN_SPEED_90, TURN_TIME_90*2);
+  	}
+  	corrigir(5);
+   	// Vira 90° para direita
+		turning(false);
+		walk(TURN_SPEED_90, TURN_TIME_90*8);
+		turning(true);
+		walk(TURN_SPEED_90, TURN_TIME_90*18);
+		turning(true);
+		//stopUs();
+		read_line_sensor(1);
+		while(estado == 3){
+			read_line_sensor(1);
+			motor[motorA] = - 20;
+   		motor[motorB] = - 20;
+   		displayCenteredBigTextLine(1, "PROCURANDO A LINHA");
+		}
+		walk(TURN_SPEED_90, TURN_TIME_90*2);
+		turning(false);
+		//corrigir(5);
+		// Anda para trás
+		walk(-TURN_SPEED_90, TURN_TIME_90*4);
+		obst = true;
+		return 1;
+	}
+	return 0;
+}
+/*int obstaculo(int range){
+	if (obst)
+		return 0;
+ // Checa pela colisão
+ if(getIRDistance(infraR) < range){
+   	//Anda até ficar na distância certa em relação ao obstáculo
+ 		int distanceInf = getIRDistance(infraR);
+   	while(distanceInf - SET_POINT_INFRA > 1 || distanceInf - SET_POINT_INFRA < -1){
+   		motor[motorA] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
+   		motor[motorB] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
+   		distanceInf = getIRDistance(infraR);
+  	}
+  	read_line_sensor(1);
+  	if (estado == 3){
+  		walk(-TURN_SPEED_90, TURN_TIME_90*4);
+  		return 0;
+  	}else{
+  		walk(-TURN_SPEED_90, TURN_TIME_90*2);
+  	}
   	corrigir(5);
    	// Vira 90° para direita
 		turning(false);
@@ -287,7 +354,7 @@ int obstaculo(int range){
 	}
 	return 0;
 }
-
+*/
 /**
  * Realiza as funções de Line Following
  * que são interpretadas na função principal

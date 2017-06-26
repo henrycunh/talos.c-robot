@@ -22,6 +22,7 @@
 #define TURN_SPEED_90 30 // Velocidade da virada na curva de 90°
 #define TURN_ERRO_K 8 // Erro permitido na virada da curva de 90°
 #define IMAGE_KP 0.2 // Constante proporcional da busca no resgate
+#define TIMER_ESPERA 1000000 // Tempo que o robô esperará parado depois de encontrar alguma bola e perde-la
 #define IMAGE_SETPOINT 70 // Ponto intermediário da busca no resgate
 #define IMAGE_ERRO 10 // Erro tolerável de alinhamento em relação à bolinha
 #define IMAGE_OFFSET 4 // Velocidade de aproximação no resgate
@@ -32,7 +33,12 @@
 #define B_MOTOR_OFFSET 1 // Ajuste do offset no motor B
 #define LF_MSG 1 // Mensagem I2C para ficar no modo de seguir linha
 #define DISTANCE 30 //Distância de entrada
+#define UPVEL 30
+#define DWVEL -30
+#define SETPOINTIR 1
+#define KPIR 1
 
+long timer = 0;
 bool resgate = false; // Armazena o estado do resgate
 bool corrigido = false; // Armazena o estado da correção
 bool offRoad = false; // Armazena o estado do robô em relação ao terreno
@@ -61,15 +67,20 @@ byte sendMsg[10]; // Armazena a mensagem a ser enviada
 
 // RESGATE
 void resgateMode(void){
-	walk(TURN_SPEED_90, TURN_TIME_90*3);
+	closeG();
+	cDown();
+	parseUP();
+	walk(TURN_SPEED_90, TURN_TIME_90*10);
 	turn(25, 0);
 	walk(TURN_SPEED_90, TURN_TIME_90*20);
 	i2c_msg(2, 8, 13, 0, 0, 0, 30);
 	displayCenteredBigTextLine(1, "RESGATE");
 	displayCenteredBigTextLine(5, "%d | %d", estado, linha);
-	entry();
+	//entry();
 	while(!searchBall()){
-		i2c_msg(2, 8, 1, 0, 0, 0, 300);
+		i2c_msg(8, 8, 13, 0, 0, 0, 300);
+		displayCenteredBigTextLine(1, "RESGATE");
+		displayCenteredBigTextLine(5, "%d | %d", estado, linha);
 		searchBall();
 	}
 	stopUs();
@@ -81,16 +92,16 @@ task main
 {
 	// Manda mensagem para o Arduino sair do modo de resgate
 	i2c_msg(2, 8, 1, 0, 0, 0, 30);
-	while(1){
-		i2c_msg(8, 8, 10, 0, 0, 0, 300);
-		//searchBall();
+
+	while(0){
+		i2c_msg(8, 8, 13, 0, 0, 0, 50);
+		searchBall();
 		displayCenteredBigTextLine(1, "ULTRA");
 		displayCenteredBigTextLine(5, "%d | %d", replyMsg[3], replyMsg[4]);
 		displayCenteredBigTextLine(10, "%d | %d", linha, estado);
 		//stopUs();
 
 	}
-
 	// Calibra o limiar de branco
 	calibrateThresh();
 	// Loop principal

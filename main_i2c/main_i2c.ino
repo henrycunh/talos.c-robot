@@ -19,7 +19,7 @@ Ultrasonic ultrasonic2(10, 9, 4000UL);
 byte val = 0;
 bool resgate = false;
 bool flag = false;
-bool ultra = true;
+bool ultra = false;
 byte trans = 200;
 byte aux;
 byte estado;
@@ -38,7 +38,7 @@ void setup() {
   Timer1.attachInterrupt(callback); // Configura a função callback() como a função para ser chamada a cada interrupção do Timer1
   mySerial.begin(115200); //Inicia a porta do tipo SoftwareSerial
   mySerial.setTimeout(500);
-  timer.setInterval(250, raspiData);
+  timer.setInterval(150, raspiData);
   //pinMode(13, OUTPUT);
   //digitalWrite(13, LOW);
 
@@ -80,8 +80,11 @@ void atualizaLinha(){
 
 void atualizaResg(){
   if(Serial.available()){
-    buffer1[0] = Serial.read();
-    buffer1[1] = Serial.read();
+    int b = Serial.available();
+    for (int a = 0; a < b; a++){
+      buffer1[0] = Serial.read();
+      buffer1[1] = Serial.read();
+    }
     if(buffer1[0] != -1){
       linha[0] = buffer1[0];
       linha[0] = constrain(linha[0], 0, 127);
@@ -118,6 +121,7 @@ void receiveData(int byteCount) {
     //Serial.println(val);
     if (val == 13) {
       //digitalWrite(13, HIGH);
+      Timer1.detachInterrupt();
       resgate = true;
     }
     if (val == 1) {

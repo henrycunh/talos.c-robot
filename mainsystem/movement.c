@@ -19,6 +19,71 @@ void setSpeed(int a, int b){
 	motor[motorB] = b * B_MOTOR_OFFSET;
 }
 
+void moveY(int count, int vel){
+
+	for(int a = 0; a < count; a++){
+		motor[motorD] = vel;
+	}
+	motor[motorD] = 0;
+}
+
+void front(float vel){
+	motor[motorA] = -vel;
+	motor[motorB] = -vel;
+}
+
+void cDown(){
+	moveY(30000, DWVEL)
+}
+
+void wB(){
+	while(getButtonPress(2) == 0){}
+}
+
+void parseUP(){
+	moveY(25000, UPVEL)
+}
+
+void parseDW(){
+	moveY(24000, DWVEL)
+}
+
+void closeG(){
+	for(int a = 0; a < 5000; a++){
+		motor[motorC] = -60;
+	}
+}
+
+void openG(){
+	for(int a = 0; a < 5000; a++){
+		motor[motorC] = 60;
+	}
+}
+void back(){
+	for(int a = 0; a < 5000; a++){
+		motor[motorA] = 30;
+		motor[motorB] = 30;
+	}
+	motor[motorA] = 0;
+	motor[motorB] = 0;
+}
+
+void stopM(){
+	motor[motorA] = 0;
+	motor[motorB] = 0;
+}
+
+void PIDaprox(){
+	int erro = getIRDistance(S3) - SETPOINTIR;
+	while(erro > 4 || erro < -4){
+		displayCenteredBigTextLine(1,"%d | %d",erro, getIRDistance(S3));
+		front(erro*KPIR);
+		erro = getIRDistance(S3) - SETPOINTIR;
+	}
+
+	stopM();
+}
+
 /**
  * Faz com que o robô pare indefinitivamente
  */
@@ -28,6 +93,15 @@ void stopUs(){
 	}
 }
 
+void gotcha(){
+	closeG();
+	cDown();
+	openG();
+	PIDAprox();
+	closeG();
+	back();
+	parseUP();
+}
 /**
  * Faz com o que o robô ande para frente
  * uma determinada quantidade de rotações

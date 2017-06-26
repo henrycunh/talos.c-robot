@@ -17,7 +17,7 @@ BF_SIGMA_COLOR = 115 # Filtro Sigma do Color Space do BF
 BF_SIGMA_SPACE = 30 # Filtro Sigma do Coordinate Space do BF
 MAX_VAL = 255 # Kernel do Closing
 THRESH_VAL = 104 # Median Blur
-AREA_MIN = 2500
+AREA_MIN = 100
 
 for i in range(1, 14): 
     image = cv2.imread("sample/sample (%d).jpg" % (i))
