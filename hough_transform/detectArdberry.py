@@ -6,8 +6,8 @@ import serial
 import numpy as np
 
 # RESOLUÇÃO DA CAPUTRA
-width = 320
-height = 240
+width = 160
+height = 128
 # PORTA SERIAL
 ser = serial.Serial('/dev/ttyACM2', 9600)
 # INICIALIZAÇÃO DA CAMERA
@@ -60,26 +60,38 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         img2 = clahe.apply(imgg)
         img2 = cv2.medianBlur(img2,1)
         cimg = cv2.cvtColor(imgg,cv2.COLOR_GRAY2BGR)
+        # Borda
+        border = cv2.copyMakeBorder(img2,10,10,10,10,cv2.BORDER_CONSTANT,value=[192,192,192])
+        cv2.rectangle(image,(0,0),(width, int(height/3)),(192,192,192),-1)
+        blur = cv2.bilateralFilter(border,BF_D,BF_SIGMA_COLOR,BF_SIGMA_SPACE)
+        # ret, thresh = cv2.threshold(blur, THRESH_VAL, MAX_VAL, cv2.THRESH_BINARY_INV)
+        edges = cv2.Canny(blur, 100, 255)
+
         # HOUGH TRANSFORM [PARAMS]
         circles = cv2.HoughCircles(img2, cv2.HOUGH_GRADIENT, 1, 10, param1=200, param2=30, minRadius=0, maxRadius=100)
-        ret, thresh = cv2.threshold(img2, THRESH_VAL, MAX_VAL, cv2.THRESH_BINARY_INV)
+        # ret, thresh = cv2.threshold(img2, THRESH_VAL, MAX_VAL, cv2.THRESH_BINARY_INV)
         # PEGAR CONTOURS
-        _, contours,_ = cv2.findContours(thresh, 1, 2)
+        _, contours,_ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        cx = 0
-        cy = 0
-        # Detectando area
         if len(contours) > 0:
-                cnt = contours[0]
-                area = cv2.contourArea(cnt)
+                area = 0
+                if len(contours) > 1:
+                        area0 = cv2.contourArea(contours[0])
+                        area1 = cv2.contourArea(contours[1])
+                        area = area0 if area0 > area1 else area1
+                        cnt = contours[0] if area0 > area1 else contours[1]
+                
+                cv2.putText(edges, "%d AREA: %d" % (i,area), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255))
+                
                 if area > AREA_MIN:
-                        cv2.drawContours(img2, contours, -1, (255,0,0), 2)
+                        cv2.drawContours(image, contours, -1, (255,0,0), 2)
                         M = cv2.moments(cnt)
                         cx = int(M['m10']/M['m00']) if M['m00'] != 0 else 0
                         cy = int(M['m01']/M['m00']) if M['m00'] != 0 else 0
-                        cv2.circle(img2, (cx, cy), 8, (255,0,255), 1)
-                        cv2.circle(img2, (cx, cy), 1, (255,255,255), 1)
-        
+                        cv2.circle(image, (cx, cy),8, (255,0,255), 1)
+                        cv2.circle(image, (cx, cy), 1, (255,255,255), 1)
+                        cv2.putText(image, "CX: %d  CY: %d" % (cx,cy), (40,40), cv2.FONT_HERSHEY_PLAIN, 2, (0,0,0))
+
         # SE NENHUM CIRCULO FOR ENCONTRADO
         if circles is None: 
                 teste = False
@@ -137,42 +149,3 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         cv2.waitKey(5)
 
 cv2.destroyAllWindows()
-
-def detectRecept(image):
-        # RESIZE --------------------------
-        height, width = image.shape[:2]
-        height, width = (height/SAMPLE_SIZE, width/SAMPLE_SIZE)
-        image = cv2.resize(image, (width, height), interpolation=cv2.INTER_CUBIC)
-        
-        # GRAY ----------------------------
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        # CLAHE ---------------------------
-        clahe = cv2.createCLAHE(clipLimit=CLAHE_CLIP, tileGridSize=(CLAHE_GRID_SIZE,CLAHE_GRID_SIZE))
-        image = clahe.apply(image)
-
-        # FILLING TOP --------------------
-        cv2.rectangle(image,(0,0),(width, int(height/3)),(192,192,192),-1)
-
-        # BLUR SELETIVO DE EDGES ---------
-        image = cv2.bilateralFilter(image,BF_D,BF_SIGMA_COLOR,BF_SIGMA_SPACE)
-
-        # THRESHOLD ----------------------
-        ret, thresh = cv2.threshold(image, THRESH_VAL, MAX_VAL, cv2.THRESH_BINARY_INV)
-
-        # CONTOURS -----------------------
-        _, contours,_ = cv2.findContours(thresh, 1, 2)
-        cx = 0
-        cy = 0
-        if len(contours) > 0:
-                cnt = contours[0]
-                area = cv2.contourArea(cnt)
-                if area > AREA_MIN:
-                #cv2.drawContours(image, contours, -1, (255,0,0), 2)
-                M = cv2.moments(cnt)
-                cx = int(M['m10']/M['m00']) if M['m00'] != 0 else 0
-                cy = int(M['m01']/M['m00']) if M['m00'] != 0 else 0
-                # cv2.circle(image, (cx, cy),8, (255,0,255), 1)
-                # cv2.circle(image, (cx, cy), 1, (255,255,255), 1)
-        
-        pass (cx, cy)
