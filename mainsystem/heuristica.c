@@ -67,7 +67,35 @@ int searchBall(){
 		closeG();
 		back();
 		parseUP();
+		parseDW();
+		parseUP();
+		return 1;
 	} else if (linha > IMAGE_SETPOINT){
+		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
+	} else {
+		setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
+	}
+	return 0;
+}
+
+int searchRecipe(){
+	//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
+	long tAtual = getMicroTimer();
+	if (replyMsg[5] == 0) {
+		if ((tAtual - timer) >= TIMER_ESPERA){
+
+		} else {
+			setSpeed(0, 0);
+		}
+	} else {
+		timer = tAtual;
+	}
+	if ((replyMsg[5] < IMAGE_SETPOINT + IMAGE_ERRO) && (replyMsg[5] >= IMAGE_SETPOINT - IMAGE_ERRO)){
+		setSpeed(0,0);
+		PIDaprox();
+		openG();
+		return 1;
+	} else if (replyMsg[5] > IMAGE_SETPOINT){
 		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
 	} else {
 		setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
@@ -163,7 +191,7 @@ int sairEstado(int mult, int std){
  * @param | [bool] dir | Lado da curva
  */
 int grade90(bool dir){
-	if (gyro > gyroV[0])
+	if (gyro > gyroV[0] - 10)
 		return 0;
 	print("GRADE 90");
 	read_line_sensor(1);

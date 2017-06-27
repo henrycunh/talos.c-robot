@@ -41,11 +41,11 @@ void wB(){
 }
 
 void parseUP(){
-	moveY(25000, UPVEL)
+	moveY(28000, UPVEL)
 }
 
 void parseDW(){
-	moveY(24000, DWVEL)
+	moveY(26000, DWVEL)
 }
 
 void closeG(){
@@ -73,15 +73,22 @@ void stopM(){
 	motor[motorB] = 0;
 }
 
-void PIDaprox(){
+int PIDaprox(){
 	int erro = getIRDistance(S3) - SETPOINTIR;
+	int count = 0;
 	while(erro > 4 || erro < -4){
 		displayCenteredBigTextLine(1,"%d | %d",erro, getIRDistance(S3));
 		front(erro*KPIR);
 		erro = getIRDistance(S3) - SETPOINTIR;
+		count++;
+		if (count > 5000){
+			stopM();
+			return 0;
+		}
 	}
 
 	stopM();
+	return 0;
 }
 
 /**

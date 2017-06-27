@@ -74,7 +74,7 @@ void atualizaLinha(){
   } else if (leitura < 132) {
     linha[0] = leitura;
   }
-  linha[2] = map(analogRead(3), 440, 330, 0, 127);
+  linha[2] = constrain(map(analogRead(3), 440, 330, 0, 127), 0, 127);
   linha[0] = constrain(linha[0], 0, 127);
 }
 
@@ -84,15 +84,21 @@ void atualizaResg(){
     for (int a = 0; a < b; a++){
       buffer1[0] = Serial.read();
       buffer1[1] = Serial.read();
+      if(buffer1[0] > 127){
+        linha[5] = constrain((buffer1[0] - 127), 0, 127);
+      }
+      if(buffer1[1] > 127){
+        linha[6] = constrain((buffer1[1] - 127), 0, 127);
+      }
     }
-    if(buffer1[0] != -1){
+    if((buffer1[0] != -1) && (buffer1[0] < 128)){
       linha[0] = buffer1[0];
       linha[0] = constrain(linha[0], 0, 127);
       Serial.print("valor\t");
       Serial.print(linha[0]);
       Serial.print("\n");
     }
-    if(buffer1[1] != -1){
+    if((buffer1[1] != -1) && (buffer1[1] < 128)){
       linha[1] = buffer1[1];
       linha[1] = constrain(linha[1], 0, 127);
     }
@@ -131,6 +137,7 @@ void receiveData(int byteCount) {
     if (val == 10) {
       ultra = true;
     }
+    // valor para procurar o receptaculo
     //Serial.println(val);
     flag = true;
     Wire.flush();

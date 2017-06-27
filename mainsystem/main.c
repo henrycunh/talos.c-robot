@@ -23,7 +23,7 @@
 #define TURN_ERRO_K 8 // Erro permitido na virada da curva de 90°
 #define IMAGE_KP 0.2 // Constante proporcional da busca no resgate
 #define TIMER_ESPERA 1000000 // Tempo que o robô esperará parado depois de encontrar alguma bola e perde-la
-#define IMAGE_SETPOINT 70 // Ponto intermediário da busca no resgate
+#define IMAGE_SETPOINT 60 // Ponto intermediário da busca no resgate
 #define IMAGE_ERRO 10 // Erro tolerável de alinhamento em relação à bolinha
 #define IMAGE_OFFSET 4 // Velocidade de aproximação no resgate
 #define COLOR_ERRO 6 // Erro permitido da cor durante a calibração
@@ -33,6 +33,7 @@
 #define B_MOTOR_OFFSET 1 // Ajuste do offset no motor B
 #define LF_MSG 1 // Mensagem I2C para ficar no modo de seguir linha
 #define DISTANCE 30 //Distância de entrada
+#define ENTRADA_ERRO 10
 #define UPVEL 30
 #define DWVEL -30
 #define SETPOINTIR 1
@@ -67,22 +68,47 @@ byte sendMsg[10]; // Armazena a mensagem a ser enviada
 
 // RESGATE
 void resgateMode(void){
-	closeG();
-	cDown();
-	parseUP();
 	walk(TURN_SPEED_90, TURN_TIME_90*10);
-	turn(25, 0);
-	walk(TURN_SPEED_90, TURN_TIME_90*20);
+	//turn(25, 0);
+	int distanceInf = getIRDistance(infraR);
+	for(int a = 0; a < 1000; a++){
+ 		motor[motorA] = - ((distanceInf	- 25) * KP * 4);
+ 		motor[motorB] = - ((distanceInf	- 25) * KP * 4);
+ 		distanceInf = getIRDistance(infraR);
+  }
+  setSpeed(0, 0);
+  turning(false);
+  for(int a = 0; a < 1000; a++){
+ 		motor[motorA] = - ((distanceInf	- 25) * KP * 4);
+ 		motor[motorB] = - ((distanceInf	- 25) * KP * 4);
+ 		distanceInf = getIRDistance(infraR);
+  }
+  setSpeed(0, 0);
+	//walk(TURN_SPEED_90, TURN_TIME_90*20);
 	i2c_msg(2, 8, 13, 0, 0, 0, 30);
 	displayCenteredBigTextLine(1, "RESGATE");
 	displayCenteredBigTextLine(5, "%d | %d", estado, linha);
 	//entry();
-	while(!searchBall()){
-		i2c_msg(8, 8, 13, 0, 0, 0, 300);
-		displayCenteredBigTextLine(1, "RESGATE");
-		displayCenteredBigTextLine(5, "%d | %d", estado, linha);
-		searchBall();
+	closeG();
+	cDown();
+	parseUP();
+	while(1){
+		while(!searchBall()){
+			i2c_msg(8, 8, 13, 0, 0, 0, 300);
+			displayCenteredBigTextLine(1, "RESGATE");
+			displayCenteredBigTextLine(5, "%d | %d", estado, linha);
+			searchBall();
+		}
+		back();
+		while(!searchRecipe()){
+			i2c_msg(8, 8, 13, 0, 0, 0, 300);
+			displayCenteredBigTextLine(1, "RECEPT");
+			displayCenteredBigTextLine(5, "%d", replyMsg[5]);
+			searchRecipe();
+		}
+		back();
 	}
+	//regate done
 	stopUs();
 
 }
@@ -92,7 +118,8 @@ task main
 {
 	// Manda mensagem para o Arduino sair do modo de resgate
 	i2c_msg(2, 8, 1, 0, 0, 0, 30);
-
+	while(0)
+		setSpeed(-20, -20);
 	while(0){
 		i2c_msg(8, 8, 13, 0, 0, 0, 50);
 		searchBall();
@@ -122,7 +149,8 @@ task main
 			// Executa a função de seguir linhas
 			lineFollowing();
 			if(garantiaRampa > 100){
-				resgateCount++;
+
+			resgateCount++;
 				displayCenteredBigTextLine(5, "RAMPA: %d | %d", garantiaRampa, resgateCount);
 			}
 	}
