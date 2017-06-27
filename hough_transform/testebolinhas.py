@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 import cv2
@@ -17,8 +18,8 @@ def constrain(x, maxVal):
 # RESOLUÇÃO DA CAPUTRA
 width = 160
 height = 128
-# PORTA SERIAL
 
+# CONFIGURAÇÃO SERIAL
 arduino_ports = [
     p.device
     for p in serial.tools.list_ports.comports()
