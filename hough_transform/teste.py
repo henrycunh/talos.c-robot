@@ -177,7 +177,7 @@ for i in range(1, 436):
         print(u'\u2500'*20)
     else:
         print("Nada a ser encontrado\n"+u'\u2500'*20)
-    
+
     time.sleep(0.05)
 
     key = cv2.waitKey(1) & 0xFF
