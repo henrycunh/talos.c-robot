@@ -68,7 +68,7 @@ byte sendMsg[10]; // Armazena a mensagem a ser enviada
 
 // RESGATE
 void resgateMode(void){
-	walk(TURN_SPEED_90, TURN_TIME_90*10);
+	/*walk(TURN_SPEED_90, TURN_TIME_90*10);
 	//turn(25, 0);
 	int distanceInf = getIRDistance(infraR);
 	for(int a = 0; a < 5000; a++){
@@ -89,7 +89,7 @@ void resgateMode(void){
  		motor[motorA] = - ((distanceInf	- 25) * KP * 4);
  		motor[motorB] = - ((distanceInf	- 25) * KP * 4);
  		distanceInf = getIRDistance(infraR);
-  }
+  }*/
 	bool search = false;
 
 	while(1){
@@ -126,8 +126,9 @@ task main
 	i2c_msg(2, 8, 1, 0, 0, 0, 30);
 	while(0)
 		setSpeed(-20, -20);
-	while(0){
+	while(1){
 		resgateMode();
+
 		//stopUs();
 
 	}

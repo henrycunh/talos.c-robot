@@ -60,6 +60,7 @@ int searchBall(){
 	}
 	if ((linha < IMAGE_SETPOINT + IMAGE_ERRO) && (linha >= IMAGE_SETPOINT - IMAGE_ERRO)){
 		setSpeed(0,0);
+		back();
 		closeG();
 		cDown();
 		openG();
@@ -92,10 +93,13 @@ int searchRecipe(){
 	}
 	if ((replyMsg[5] < 77 + IMAGE_ERRO) && (replyMsg[5] >= 77 - IMAGE_ERRO)){
 		setSpeed(0,0);
-		for(int a = 0; a < 30000; a++){
+		for(int a = 0; a < 20000; a++){
 			setSpeed(-30, -30);
 		}
+
+		parseDW();
 		openG();
+		parseUP();
 		return 1;
 		} else if (replyMsg[5] > 77){
 		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
@@ -193,7 +197,6 @@ int sairEstado(int mult, int std){
 * @param | [bool] dir | Lado da curva
 */
 int grade90(bool dir){
-	static int count = 0;
 	if (gyro > gyroV[0] - 10)
 		return 0;
 	print("GRADE 90");
@@ -214,47 +217,58 @@ int grade90(bool dir){
 		bool testeL = dir? ( linha > SET_POINT? false : true ) : ( linha < SET_POINT? false : true);
 		if (testeL) {
 			do {
-				print("GRADE 90");
+				print("VIRADA 90");
 				// Corrige até que o erro esteja dentro do definido
 				erro = PID(read_line_sensor(1), OFFSET/2, KP, SET_POINT);
 			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
-			count = 0;
 		}else{
 			do {
-				print("GRADE 90");
+				print("VIRADA 90");
 				// Corrige até que o erro esteja dentro do definido
-				turn(10, !dir);
+				turn(1, !dir);
 			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
-			count = 0;
 		}
 	}
 	read_line_sensor(1);
 	int erro = read_line_sensor(1) - SET_POINT;
-	if(count > 2){
-		count = 0;
-	} else {
-		if(erro > 20 || erro < -20){
-			count++;
-			int erro;
-			// Anda para trás
-			//walk(-15,22);
-			if(estado != 3){
-				do {
-					print("CORRIGINDO PARA TRÁS");
-					// Corrige até que o erro esteja dentro do definido
-					erro = PID(read_line_sensor(1), -OFFSET/2, KP, SET_POINT);
-				}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
+	if(erro > 20 || erro < -20){
+		int erro;
+		// Anda para trás
+		//walk(-15,22);
+		if(estado != 3){
+			do {
+				print("CORRIGINDO PARA TRÁS");
+				// Corrige até que o erro esteja dentro do definido
+				erro = PID(read_line_sensor(1), -OFFSET/2, KP, SET_POINT);
+			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
+		}
+		else{
+			while(estado == 3){
+				print("BACKWARDS");
+				read_line_sensor(1);
+				// Anda para trás
+				// Anda para frente, dado o multiplicador
+				setSpeed(20, 20);
+				// Corrige novamente
+
 			}
-			else{
-				while(estado == 3){
-					print("BACKWARDS");
-					read_line_sensor(1);
-					// Anda para trás
-					// Anda para frente, dado o multiplicador
-					setSpeed(20, 20);
-					// Corrige novamente
+			if (estado = 4) {
+
+			} else {
+				bool testeL = dir? ( linha > SET_POINT? false : true ) : ( linha < SET_POINT? false : true);
+				if (testeL) {
+					do {
+						print("VIRADA 90");
+						// Corrige até que o erro esteja dentro do definido
+						erro = PID(read_line_sensor(1), OFFSET/2, KP, SET_POINT);
+					}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
+				}else{
+					do {
+						print("VIRADA 90");
+						// Corrige até que o erro esteja dentro do definido
+						turn(1, !dir);
+					}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
 				}
-				corrigir(5);
 			}
 		}
 	}
@@ -297,6 +311,8 @@ int heuristica(int cor){
 int obstaculo(int range){
 	if (obst)
 		return 0;
+	if (garantiaRampa > 100)
+		return 0;
 	// Checa pela colisão
 	if(getIRDistance(infraR) < range){
 		//Anda até ficar na distância certa em relação ao obstáculo
@@ -319,7 +335,7 @@ int obstaculo(int range){
 		turning(false);
 		walk(TURN_SPEED_90, TURN_TIME_90*10);
 		turning(true);
-		walk(TURN_SPEED_90, TURN_TIME_90*16);
+		walk(TURN_SPEED_90, TURN_TIME_90*18);
 		turning(true);
 		//stopUs();
 		read_line_sensor(1);
@@ -333,7 +349,38 @@ int obstaculo(int range){
 		turning(false);
 		//corrigir(5);
 		// Anda para trás
-		walk(-TURN_SPEED_90, TURN_TIME_90*4);
+		read_line_sensor(1);
+		if (estado == 3) {
+			while	(estado == 3){
+				read_line_sensor(1);
+				setSpeed(30, 30);
+			}
+		} else {
+			walk(-TURN_SPEED_90, TURN_TIME_90*4);
+		}
+		while (estado == 3){
+			if (estado == 3) {
+				int c = 0;
+				while	(estado == 3){
+					c++;
+					read_line_sensor(1);
+					setSpeed(30, 30);
+					if (c > 1000)
+						break;
+				}
+			}
+			if (estado == 3) {
+				int c = 0;
+				while	(estado == 3){
+					c++;
+					read_line_sensor(1);
+					setSpeed(-30, -30);
+					if (c > 2000)
+						break;
+				}
+			}
+		}
+		corrigir(5);
 		obst = true;
 		return 1;
 	}
