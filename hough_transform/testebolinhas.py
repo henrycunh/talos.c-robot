@@ -32,20 +32,16 @@ while not arduino_ports:
         for p in serial.tools.list_ports.comports()
         if 'ACM' in p.description
     ]
-    print ("No Arduino found")
-
+    print ("Arduino não encontrado")
+    
 
 ser = serial.Serial(arduino_ports[0], 9600)
+
 # INICIALIZACAO DA CAMERA
 camera = PiCamera()
 camera.resolution = (width, height)
 camera.framerate = 32
 
-minim = 0
-inic = 300
-valAnterior = 0
-teste = True
-cont = 0
 FG = 255
 CLAHE_CLIP = 3 # Clip Limit do CLAHE
 CLAHE_GRID_SIZE = 16 # Grid Size do CLAHE
