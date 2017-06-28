@@ -49,18 +49,18 @@ void parseDW(){
 }
 
 void closeG(){
-	for(int a = 0; a < 5000; a++){
+	for(int a = 0; a < 20000; a++){
 		motor[motorC] = -60;
 	}
 }
 
 void openG(){
-	for(int a = 0; a < 5000; a++){
+	for(int a = 0; a < 20000; a++){
 		motor[motorC] = 60;
 	}
 }
 void back(){
-	for(int a = 0; a < 5000; a++){
+	for(int a = 0; a < 15000; a++){
 		motor[motorA] = 30;
 		motor[motorB] = 30;
 	}

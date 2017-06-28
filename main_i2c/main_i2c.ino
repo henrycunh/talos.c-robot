@@ -16,7 +16,7 @@ SimpleTimer timer;
 Ultrasonic ultrasonic1(11, 8, 4000UL);
 Ultrasonic ultrasonic2(10, 9, 4000UL);
 
-byte val = 0;
+byte val = 1;
 bool resgate = false;
 bool flag = false;
 bool ultra = false;
@@ -74,7 +74,7 @@ void atualizaLinha(){
   } else if (leitura < 132) {
     linha[0] = leitura;
   }
-  linha[2] = constrain(map(analogRead(3), 440, 330, 0, 127), 0, 127);
+  linha[2] = map(analogRead(3), 440, 330, 0, 127);
   linha[0] = constrain(linha[0], 0, 127);
 }
 
@@ -88,7 +88,7 @@ void atualizaResg(){
         linha[5] = constrain((buffer1[0] - 127), 0, 127);
       }
       if(buffer1[1] > 127){
-        linha[6] = constrain((buffer1[1] - 127), 0, 127);
+        linha[5] = constrain((buffer1[1] - 127), 0, 127);
       }
     }
     if((buffer1[0] != -1) && (buffer1[0] < 128)){
@@ -127,7 +127,6 @@ void receiveData(int byteCount) {
     //Serial.println(val);
     if (val == 13) {
       //digitalWrite(13, HIGH);
-      Timer1.detachInterrupt();
       resgate = true;
     }
     if (val == 1) {

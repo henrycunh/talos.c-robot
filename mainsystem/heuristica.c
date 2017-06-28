@@ -1,18 +1,18 @@
 /**
- * Arquivo com as funções de fluxo heurístico, que
- * nos ajuda a fazer soluções com 'educated guesses'
- * ------------------------------------------------
- * @author Iago Elias
- * @author Henrique Cunha
- * @version 1.0
- */
+* Arquivo com as funções de fluxo heurístico, que
+* nos ajuda a fazer soluções com 'educated guesses'
+* ------------------------------------------------
+* @author Iago Elias
+* @author Henrique Cunha
+* @version 1.0
+*/
 
 /**
- * Corrige o robô, dado um limiar, através do
- * PID com um offset menor
- * -----------------------------------------------------------
- * @param | [int] limiar | Limiar a ser atingido pela correção
- */
+* Corrige o robô, dado um limiar, através do
+* PID com um offset menor
+* -----------------------------------------------------------
+* @param | [int] limiar | Limiar a ser atingido pela correção
+*/
 void corrigir(int limiar){
 	print("CORRIGINDO");
 	int erro = read_line_sensor(1) - SET_POINT;
@@ -24,11 +24,11 @@ void corrigir(int limiar){
 
 
 /**
- * Realiza o Gap, ao analisar se já fora corrigido
- * o erro da posição do robô na linha, e anda para
- * frente até que o estado mude para o que representa
- * uma linha dentro dos limites do sensor
- */
+* Realiza o Gap, ao analisar se já fora corrigido
+* o erro da posição do robô na linha, e anda para
+* frente até que o estado mude para o que representa
+* uma linha dentro dos limites do sensor
+*/
 void gap(){
 	// Se não foi, anda um pouco para trás
 	walk(-20, 80);
@@ -52,10 +52,10 @@ int searchBall(){
 	if (linha == 0) {
 		if ((tAtual - timer) >= TIMER_ESPERA){
 
-		} else {
+			} else {
 			setSpeed(0, 0);
 		}
-	} else {
+		} else {
 		timer = tAtual;
 	}
 	if ((linha < IMAGE_SETPOINT + IMAGE_ERRO) && (linha >= IMAGE_SETPOINT - IMAGE_ERRO)){
@@ -70,9 +70,9 @@ int searchBall(){
 		parseDW();
 		parseUP();
 		return 1;
-	} else if (linha > IMAGE_SETPOINT){
+		} else if (linha > IMAGE_SETPOINT){
 		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
-	} else {
+		} else {
 		setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
 	}
 	return 0;
@@ -84,29 +84,31 @@ int searchRecipe(){
 	if (replyMsg[5] == 0) {
 		if ((tAtual - timer) >= TIMER_ESPERA){
 
-		} else {
+			} else {
 			setSpeed(0, 0);
 		}
-	} else {
+		} else {
 		timer = tAtual;
 	}
-	if ((replyMsg[5] < IMAGE_SETPOINT + IMAGE_ERRO) && (replyMsg[5] >= IMAGE_SETPOINT - IMAGE_ERRO)){
+	if ((replyMsg[5] < 77 + IMAGE_ERRO) && (replyMsg[5] >= 77 - IMAGE_ERRO)){
 		setSpeed(0,0);
-		PIDaprox();
+		for(int a = 0; a < 30000; a++){
+			setSpeed(-30, -30);
+		}
 		openG();
 		return 1;
-	} else if (replyMsg[5] > IMAGE_SETPOINT){
+		} else if (replyMsg[5] > 77){
 		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
-	} else {
+		} else {
 		setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
 	}
 	return 0;
 }
 
 /**
- * Movimenta o robô para a frente até
- * sair de cima de uma área verde
- */
+* Movimenta o robô para a frente até
+* sair de cima de uma área verde
+*/
 void gExit(){
 	int cor;
 	do {
@@ -117,12 +119,12 @@ void gExit(){
 }
 
 /**
- * Faz a virada de 90° utilizada ao
- * detectar uma área verde, dado o lado
- * da curva
- * -------------------------------------
- * @param | [bool] side | Lado da curva
- */
+* Faz a virada de 90° utilizada ao
+* detectar uma área verde, dado o lado
+* da curva
+* -------------------------------------
+* @param | [bool] side | Lado da curva
+*/
 void greenTurn(bool side){
 	gExit();
 	print("GREEN TURN");
@@ -133,10 +135,10 @@ void greenTurn(bool side){
 }
 
 /**
- * Faz a virada de 90°
- * -------------------------------------
- * @param | [bool] side | Lado da curva
- */
+* Faz a virada de 90°
+* -------------------------------------
+* @param | [bool] side | Lado da curva
+*/
 void turning(bool side){
 	gExit();
 	print("GREEN TURN");
@@ -145,12 +147,12 @@ void turning(bool side){
 }
 
 /**
- * Sai do estado atual, dado o estado
- * e uma direção - frente ou ré
- * ------------------------------------------
- * @param | [int] mult | Direção do movimento
- * @param | [int] std  | Estado a ser evitado
- */
+* Sai do estado atual, dado o estado
+* e uma direção - frente ou ré
+* ------------------------------------------
+* @param | [int] mult | Direção do movimento
+* @param | [int] std  | Estado a ser evitado
+*/
 int sairEstado(int mult, int std){
 	// Contador de interações
 	int intCount = 0;
@@ -165,7 +167,7 @@ int sairEstado(int mult, int std){
 			greenTurn(false);
 			gExit();
 			return 0;
-		}else if(cor == 2){
+			}else if(cor == 2){
 			greenTurn(true);
 			gExit();
 			return 0;
@@ -186,10 +188,10 @@ int sairEstado(int mult, int std){
 
 
 /**
- * Faz a virada de 90° dado uma direção
- * -------------------------------------
- * @param | [bool] dir | Lado da curva
- */
+* Faz a virada de 90° dado uma direção
+* -------------------------------------
+* @param | [bool] dir | Lado da curva
+*/
 int grade90(bool dir){
 	if (gyro > gyroV[0] - 10)
 		return 0;
@@ -215,7 +217,7 @@ int grade90(bool dir){
 				// Corrige até que o erro esteja dentro do definido
 				erro = PID(read_line_sensor(1), OFFSET/2, KP, SET_POINT);
 			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
-		}else{
+			}else{
 			do {
 				print("GRADE 90");
 				// Corrige até que o erro esteja dentro do definido
@@ -243,7 +245,7 @@ int grade90(bool dir){
 				// Anda para trás
 				// Anda para frente, dado o multiplicador
 				setSpeed(20, 20);
-			// Corrige novamente
+				// Corrige novamente
 			}
 			corrigir(5);
 		}
@@ -251,80 +253,73 @@ int grade90(bool dir){
 	return 0;
 }
 
-// Entrada na arena
-void entry(){
-	int distancia = getIRDistance(infraR);
-	while((distancia - DISTANCE > 5) || (distancia - DISTANCIA < -5)){
-		setSpeed(-KP*(distancia - DISTANCE) - (KP/2)*(distancia - DISTANCE),-KP*(distancia - DISTANCE)+(KP/2)*(distancia - DISTANCE));
-		distancia = getIRDistance(infraR);
-	}
-}
 /**
- * Controla o comportamento de heurística
- * como curvas de 90° e detecção de áreas verde
- * --------------------------------------------
- * @param | [int] cor | Cor a ser analisada
- */
+* Controla o comportamento de heurística
+* como curvas de 90° e detecção de áreas verde
+* --------------------------------------------
+* @param | [int] cor | Cor a ser analisada
+*/
 int heuristica(int cor){
 	// Confere se o resgate foi ativado
 	if (resgate)
-			return 0;
+		return 0;
 	switch(estado){
-		case 1: // Curva de 90° para a esquerda
-			print("CURVA: ESQUERDA");
-			grade90(true);
-			break;
-		case 2: // Curva de 90° para a direita
-			print("CURVA: DIREITA");
-			grade90(false);
-			break;
-		case 3: // Realizar o Gap
-			gap();
-			break;
+	case 1: // Curva de 90° para a esquerda
+		print("CURVA: ESQUERDA");
+		grade90(true);
+		break;
+	case 2: // Curva de 90° para a direita
+		print("CURVA: DIREITA");
+		grade90(false);
+		break;
+	case 3: // Realizar o Gap
+		gap();
+		break;
 	}
 	return 0;
 }
 
 /**
- * Realiza a detecção e desvio de obstáculo
- * através de uma análise sensível dos arredores
- * e movimentação guiada por heurística
- * ----------------------------------------------------------
- * @param | [int] range | Alcançe mínimo para ativar o desvio
- */
+* Realiza a detecção e desvio de obstáculo
+* através de uma análise sensível dos arredores
+* e movimentação guiada por heurística
+* ----------------------------------------------------------
+* @param | [int] range | Alcançe mínimo para ativar o desvio
+*/
 int obstaculo(int range){
 	if (obst)
 		return 0;
- // Checa pela colisão
- if(getIRDistance(infraR) < range){
-   	//Anda até ficar na distância certa em relação ao obstáculo
- 		int distanceInf = getIRDistance(infraR);
-   	while(distanceInf - SET_POINT_INFRA > 1 || distanceInf - SET_POINT_INFRA < -1){
-   		motor[motorA] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
-   		motor[motorB] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
-   		distanceInf = getIRDistance(infraR);
-  	}
-  	read_line_sensor(1);
-  	if (estado == 3){
-  		walk(-TURN_SPEED_90, TURN_TIME_90*4);
-  		return 0;
-  	}else{
-  		walk(-TURN_SPEED_90, TURN_TIME_90*2);
-  	}
-  	corrigir(5);
-   	// Vira 90° para direita
+	// Checa pela colisão
+	if(getIRDistance(infraR) < range){
+		//Anda até ficar na distância certa em relação ao obstáculo
+		int distanceInf = getIRDistance(infraR);
+		while(distanceInf - SET_POINT_INFRA > 1 || distanceInf - SET_POINT_INFRA < -1){
+			motor[motorA] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
+			motor[motorB] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
+			distanceInf = getIRDistance(infraR);
+		}
+		read_line_sensor(1);
+		if (estado == 3){
+			walk(-TURN_SPEED_90, TURN_TIME_90*4);
+			turn(15, true);
+			return 0;
+			}else{
+			walk(-TURN_SPEED_90, TURN_TIME_90*2);
+		}
+		corrigir(5);
+		// Vira 90° para direita
 		turning(false);
-		walk(TURN_SPEED_90, TURN_TIME_90*8);
+		walk(TURN_SPEED_90, TURN_TIME_90*10);
 		turning(true);
-		walk(TURN_SPEED_90, TURN_TIME_90*18);
+		walk(TURN_SPEED_90, TURN_TIME_90*16);
 		turning(true);
 		//stopUs();
 		read_line_sensor(1);
 		while(estado == 3){
 			read_line_sensor(1);
 			motor[motorA] = - 20;
-   		motor[motorB] = - 20;
-   		displayCenteredBigTextLine(1, "PROCURANDO A LINHA");
+			motor[motorB] = - 20;
+			displayCenteredBigTextLine(1, "PROCURANDO A LINHA");
 		}
 		walk(TURN_SPEED_90, TURN_TIME_90*2);
 		turning(false);
@@ -337,107 +332,107 @@ int obstaculo(int range){
 	return 0;
 }
 /*int obstaculo(int range){
-	if (obst)
+if (obst)
+return 0;
+// Checa pela colisão
+if(getIRDistance(infraR) < range){
+//Anda até ficar na distância certa em relação ao obstáculo
+int distanceInf = getIRDistance(infraR);
+while(distanceInf - SET_POINT_INFRA > 1 || distanceInf - SET_POINT_INFRA < -1){
+motor[motorA] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
+motor[motorB] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
+distanceInf = getIRDistance(infraR);
+}
+read_line_sensor(1);
+if (estado == 3){
+walk(-TURN_SPEED_90, TURN_TIME_90*4);
+return 0;
+}else{
+walk(-TURN_SPEED_90, TURN_TIME_90*2);
+}
+corrigir(5);
+// Vira 90° para direita
+turning(false);
+//stopUs();
+read_line_sensor(1);
+int contador = 0;
+while(contador < 80){
+read_line_sensor(1);
+motor[motorA] = - 20;
+motor[motorB] = - 45;
+contador++;
+}
+read_line_sensor(1);
+while(estado != 4){
+read_line_sensor(1);
+motor[motorA] = - 20;
+motor[motorB] = - 45;
+}
+turning(false);
+//corrigir(5);
+// Anda para trás
+walk(-TURN_SPEED_90, TURN_TIME_90*4);
+obst = true;
+return 1;
+}
+return 0;
+}
+*/
+/**
+* Realiza as funções de Line Following
+* que são interpretadas na função principal
+*/
+int lineFollowing(){
+	// Faz a leitura da linha e do verde
+	int sensor = read_line_sensor(1);
+	int cor = read_color_sensor();
+
+	// Checa pelo resgate
+	if (resgate)
 		return 0;
- // Checa pela colisão
- if(getIRDistance(infraR) < range){
-   	//Anda até ficar na distância certa em relação ao obstáculo
- 		int distanceInf = getIRDistance(infraR);
-   	while(distanceInf - SET_POINT_INFRA > 1 || distanceInf - SET_POINT_INFRA < -1){
-   		motor[motorA] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
-   		motor[motorB] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
-   		distanceInf = getIRDistance(infraR);
-  	}
-  	read_line_sensor(1);
-  	if (estado == 3){
-  		walk(-TURN_SPEED_90, TURN_TIME_90*4);
-  		return 0;
-  	}else{
-  		walk(-TURN_SPEED_90, TURN_TIME_90*2);
-  	}
-  	corrigir(5);
-   	// Vira 90° para direita
-		turning(false);
-		//stopUs();
-		read_line_sensor(1);
-		int contador = 0;
-		while(contador < 80){
-			read_line_sensor(1);
-			motor[motorA] = - 20;
-   		motor[motorB] = - 45;
-   		contador++;
-		}
-		read_line_sensor(1);
-		while(estado != 4){
-			read_line_sensor(1);
-			motor[motorA] = - 20;
-   		motor[motorB] = - 45;
-		}
-		turning(false);
-		//corrigir(5);
-		// Anda para trás
-		walk(-TURN_SPEED_90, TURN_TIME_90*4);
-		obst = true;
+	// Checa por um obstáculo
+	obstaculo(18);
+	// Checa pelo verde
+	switch(cor){
+	case 1:	// Vira para direita
+		greenTurn(false);
+		gExit();
+		break;
+	case 2: // Vira para esquerda
+		greenTurn(true);
+		gExit();
+		break;
+	}
+	// Realiza PID
+	if((sensor <= 127) && (sensor >= 0) && (estado == 4)){
+		int erro = PID(sensor, OFFSET, KP, SET_POINT);
+		eraseDisplay();
+		displayCenteredBigTextLine(1, "PID: %d | %d", erro, gyro);
+		return 0;
+	}
+	// Realiza a heuristica
+	heuristica(cor);
+	return 0;
+}
+
+/**
+* Checa se o robô está na rampa, e define sua
+* movimentação na mesma, além de se preparar para
+* detectar o cinza, que indica para entrar no modo
+* de resgate
+* ------------------------------------------------------
+* @param | [int] gyroRange | Limite mínimo do giroscópio
+*/
+int checkRampa(void){
+	// Checa se o robô está no limite
+	if(gyro > gyroV[0] || gyro < gyroV[1]){
+		// Executa o PID
+		int sensor = read_line_sensor(1);
+		int erro = PID(sensor, OFFSET, KP, SET_POINT);
+		eraseDisplay();
+		displayCenteredBigTextLine(1, "RAMPA: %d | %d", erro, gyro);
+		displayCenteredBigTextLine(5, "RAMPA: %d | %d", garantiaRampa, resgateCount);
 		return 1;
 	}
 	return 0;
 }
-*/
-/**
- * Realiza as funções de Line Following
- * que são interpretadas na função principal
- */
-int lineFollowing(){
-		// Faz a leitura da linha e do verde
-		int sensor = read_line_sensor(1);
-		int cor = read_color_sensor();
-
-		// Checa pelo resgate
-		if (resgate)
-			return 0;
-		// Checa por um obstáculo
-		obstaculo(18);
-		// Checa pelo verde
-		switch(cor){
-			case 1:	// Vira para direita
-				greenTurn(false);
-				gExit();
-				break;
-			case 2: // Vira para esquerda
-				greenTurn(true);
-				gExit();
-				break;
-		}
-		// Realiza PID
-		if((sensor <= 127) && (sensor >= 0) && (estado == 4)){
-			int erro = PID(sensor, OFFSET, KP, SET_POINT);
-			eraseDisplay();
-			displayCenteredBigTextLine(1, "PID: %d | %d", erro, gyro);
-			return 0;
-		}
-		// Realiza a heuristica
-		heuristica(cor);
-	return 0;
-}
-
-/**
- * Checa se o robô está na rampa, e define sua
- * movimentação na mesma, além de se preparar para
- * detectar o cinza, que indica para entrar no modo
- * de resgate
- * ------------------------------------------------------
- * @param | [int] gyroRange | Limite mínimo do giroscópio
- */
- int checkRampa(void){
-   	// Checa se o robô está no limite
-		if(gyro > gyroV[0] || gyro < gyroV[1]){
-			// Executa o PID
-			int sensor = read_line_sensor(1);
-			int erro = PID(sensor, OFFSET, KP, SET_POINT);
-			eraseDisplay();
-			displayCenteredBigTextLine(1, "RAMPA: %d | %d", erro, gyro);
-			displayCenteredBigTextLine(5, "RAMPA: %d | %d", garantiaRampa, resgateCount);
-			return 1;
-		}
-		return 0;
- }

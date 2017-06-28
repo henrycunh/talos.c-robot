@@ -71,42 +71,48 @@ void resgateMode(void){
 	walk(TURN_SPEED_90, TURN_TIME_90*10);
 	//turn(25, 0);
 	int distanceInf = getIRDistance(infraR);
-	for(int a = 0; a < 1000; a++){
+	for(int a = 0; a < 5000; a++){
  		motor[motorA] = - ((distanceInf	- 25) * KP * 4);
  		motor[motorB] = - ((distanceInf	- 25) * KP * 4);
  		distanceInf = getIRDistance(infraR);
   }
   setSpeed(0, 0);
   turning(false);
-  for(int a = 0; a < 1000; a++){
- 		motor[motorA] = - ((distanceInf	- 25) * KP * 4);
- 		motor[motorB] = - ((distanceInf	- 25) * KP * 4);
- 		distanceInf = getIRDistance(infraR);
-  }
   setSpeed(0, 0);
 	//walk(TURN_SPEED_90, TURN_TIME_90*20);
 	i2c_msg(2, 8, 13, 0, 0, 0, 30);
-	displayCenteredBigTextLine(1, "RESGATE");
-	displayCenteredBigTextLine(5, "%d | %d", estado, linha);
 	//entry();
 	closeG();
 	cDown();
 	parseUP();
+	for(int a = 0; a < 5000; a++){
+ 		motor[motorA] = - ((distanceInf	- 25) * KP * 4);
+ 		motor[motorB] = - ((distanceInf	- 25) * KP * 4);
+ 		distanceInf = getIRDistance(infraR);
+  }
+	bool search = false;
+
 	while(1){
-		while(!searchBall()){
+		back();
+		resetMotorEncoder(motorA);
+		while((!search)){
 			i2c_msg(8, 8, 13, 0, 0, 0, 300);
 			displayCenteredBigTextLine(1, "RESGATE");
 			displayCenteredBigTextLine(5, "%d | %d", estado, linha);
-			searchBall();
+			search = searchBall();
 		}
 		back();
-		while(!searchRecipe()){
-			i2c_msg(8, 8, 13, 0, 0, 0, 300);
-			displayCenteredBigTextLine(1, "RECEPT");
-			displayCenteredBigTextLine(5, "%d", replyMsg[5]);
-			searchRecipe();
+
+		if(search){
+			search = false;
+			while(!search){
+				i2c_msg(8, 8, 13, 0, 0, 0, 300);
+				displayCenteredBigTextLine(1, "RECEPT");
+				displayCenteredBigTextLine(5, "%d", replyMsg[5]);
+				search = searchRecipe();
+			}
 		}
-		back();
+		search = false;
 	}
 	//regate done
 	stopUs();
@@ -121,11 +127,8 @@ task main
 	while(0)
 		setSpeed(-20, -20);
 	while(0){
-		i2c_msg(8, 8, 13, 0, 0, 0, 50);
-		searchBall();
-		displayCenteredBigTextLine(1, "ULTRA");
-		displayCenteredBigTextLine(5, "%d | %d", replyMsg[3], replyMsg[4]);
-		displayCenteredBigTextLine(10, "%d | %d", linha, estado);
+		resgateMode();
+
 		//stopUs();
 
 	}
@@ -133,6 +136,8 @@ task main
 	calibrateThresh();
 	// Loop principal
 	while(1){
+
+		lineFollowing();
 			// Caso esteja na rampa
 			if(checkRampa()){
 				garantiaRampa++;
@@ -147,7 +152,7 @@ task main
 					//resgateCount = 0;
 			}
 			// Executa a função de seguir linhas
-			lineFollowing();
+
 			if(garantiaRampa > 100){
 
 			resgateCount++;
