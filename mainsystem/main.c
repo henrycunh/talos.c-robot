@@ -128,7 +128,6 @@ task main
 		setSpeed(-20, -20);
 	while(0){
 		resgateMode();
-
 		//stopUs();
 
 	}

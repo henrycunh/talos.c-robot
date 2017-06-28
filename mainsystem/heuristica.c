@@ -193,6 +193,7 @@ int sairEstado(int mult, int std){
 * @param | [bool] dir | Lado da curva
 */
 int grade90(bool dir){
+	static int count = 0;
 	if (gyro > gyroV[0] - 10)
 		return 0;
 	print("GRADE 90");
@@ -217,37 +218,44 @@ int grade90(bool dir){
 				// Corrige até que o erro esteja dentro do definido
 				erro = PID(read_line_sensor(1), OFFSET/2, KP, SET_POINT);
 			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
-			}else{
+			count = 0;
+		}else{
 			do {
 				print("GRADE 90");
 				// Corrige até que o erro esteja dentro do definido
-				turn(1, !dir);
+				turn(10, !dir);
 			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
+			count = 0;
 		}
 	}
 	read_line_sensor(1);
 	int erro = read_line_sensor(1) - SET_POINT;
-	if(erro > 20 || erro < -20){
-		int erro;
-		// Anda para trás
-		//walk(-15,22);
-		if(estado != 3){
-			do {
-				print("CORRIGINDO PARA TRÁS");
-				// Corrige até que o erro esteja dentro do definido
-				erro = PID(read_line_sensor(1), -OFFSET/2, KP, SET_POINT);
-			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
-		}
-		else{
-			while(estado == 3){
-				print("BACKWARDS");
-				read_line_sensor(1);
-				// Anda para trás
-				// Anda para frente, dado o multiplicador
-				setSpeed(20, 20);
-				// Corrige novamente
+	if(count > 2){
+		count = 0;
+	} else {
+		if(erro > 20 || erro < -20){
+			count++;
+			int erro;
+			// Anda para trás
+			//walk(-15,22);
+			if(estado != 3){
+				do {
+					print("CORRIGINDO PARA TRÁS");
+					// Corrige até que o erro esteja dentro do definido
+					erro = PID(read_line_sensor(1), -OFFSET/2, KP, SET_POINT);
+				}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
 			}
-			corrigir(5);
+			else{
+				while(estado == 3){
+					print("BACKWARDS");
+					read_line_sensor(1);
+					// Anda para trás
+					// Anda para frente, dado o multiplicador
+					setSpeed(20, 20);
+					// Corrige novamente
+				}
+				corrigir(5);
+			}
 		}
 	}
 	return 0;
