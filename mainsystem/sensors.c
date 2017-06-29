@@ -51,11 +51,11 @@ void calibrateThresh(){
 		}
 		i2c_msg(5, 8, 1, 0, 0, 0, 30);
 		if (gyro > 50){
-			gyroV[0] = gyro + 40;
-			gyroV[1] = gyro - 40;
+			gyroV[0] = gyro + 30;
+			gyroV[1] = gyro - 30;
 		}else{
-			gyroV[0] = gyro + 20;
-			gyroV[1] = gyro - 20;
+			gyroV[0] = gyro + 15;
+			gyroV[1] = gyro - 15;
 		}
 
 	}

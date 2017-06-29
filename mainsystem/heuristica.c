@@ -46,64 +46,76 @@ void gap(){
 	}
 }
 
+// Procura a bolinha
 int searchBall(){
-	//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
-	long tAtual = getMicroTimer();
-	if (linha == 0) {
-		if ((tAtual - timer) >= TIMER_ESPERA){
-
-			} else {
-			setSpeed(0, 0);
-		}
-		} else {
-		timer = tAtual;
-	}
-	if ((linha < IMAGE_SETPOINT + IMAGE_ERRO) && (linha >= IMAGE_SETPOINT - IMAGE_ERRO)){
+	static bool lado = true;
+	// Caso a bolinha seja detectada pela camera
+	if ((linha < 127) && (linha > 0)){
+		// Para o robô
 		setSpeed(0,0);
-		back();
+		// Testa a direção do robô
+		bool turning = linha - IMAGE_SETPOINT > 0 ? true : false;
+		// Vira em função da distância da bolinha
+		turn((abs(linha - IMAGE_SETPOINT)*KPHOUGH), turning);
+		// Para o robÔ
+		setSpeed(0,0);
+		// Vai um pouco para trás
+		backin(4000);
+		// Fecha a garra
 		closeG();
+		// Levanta a garra
 		cDown();
+		// Fecha a garra
 		openG();
+		// Se aproxima da parede
 		PIDAprox();
+		// Fecha a garra
 		closeG();
-		back();
-		parseUP();
-		parseDW();
+		// Se afasta enquanto fecha a garra
+		backin(4000);
+		// Levanta a bolinha
 		parseUP();
 		return 1;
-		} else if (linha > IMAGE_SETPOINT){
-		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
+	// Caso a bolinha não seja detectada ele vira para o ultimo lado que estava (verificar)
+	} else if (linha == 0){
+		if (lado) {
+			setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
 		} else {
-		setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
+			setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
+		}
+	}else if (linha == 127){
+		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
+		lado = false;
 	}
 	return 0;
 }
 
+// Procura o receptáculo
 int searchRecipe(){
-	//PID(linha, 0, IMAGE_KP, IMAGE_SETPOINT);
-	long tAtual = getMicroTimer();
-	if (replyMsg[5] == 0) {
-		if ((tAtual - timer) >= TIMER_ESPERA){
-
-			} else {
-			setSpeed(0, 0);
-		}
-		} else {
-		timer = tAtual;
-	}
-	if ((replyMsg[5] < 77 + IMAGE_ERRO) && (replyMsg[5] >= 77 - IMAGE_ERRO)){
+	// Verifica se o receptáculo está na posição certa
+	if ((replyMsg[5] < 50 + IMAGE_ERRO) && (replyMsg[5] >= 50 - IMAGE_ERRO)){
+		// Para o robô
 		setSpeed(0,0);
-		for(int a = 0; a < 20000; a++){
-			setSpeed(-30, -30);
-		}
-
+		int distanceInf = 0;
+		// Se aproxima do receptáculo via PID
+		for(int a = 0; a < 5000; a++){
+ 			motor[motorA] = - ((distanceInf	- 20) * KP * 4);
+ 			motor[motorB] = - ((distanceInf	- 20) * KP * 4);
+ 			distanceInf = getIRDistance(infraR);
+  	}
+		// Desce a garra
 		parseDW();
+		// Abre a garra
 		openG();
+		// Sobe a garra
 		parseUP();
+		// Fecha a garra
+		closeG();
 		return 1;
-		} else if (replyMsg[5] > 77){
+	// Caso o receptáculo não esteja no lugar certo ele se move na direção correta
+	} else if (replyMsg[5] > 50){
 		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
-		} else {
+	} else {
 		setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
 	}
 	return 0;
@@ -179,7 +191,7 @@ int sairEstado(int mult, int std){
 		// Adiciona à quantidade de iterações
 		intCount++;
 		if (estado == 4)
-			return 0;
+			return 4;
 		// Caso ultrapasse a quantidade máxima de iterações
 		if(intCount > INT_COUNT_MAX){
 			// Corrige
@@ -197,31 +209,36 @@ int sairEstado(int mult, int std){
 * @param | [bool] dir | Lado da curva
 */
 int grade90(bool dir){
-	if (gyro > gyroV[0] - 10)
+	// Garante que não está na rampa
+	if (gyro > gyroV[0])
 		return 0;
 	print("GRADE 90");
-	read_line_sensor(1);
-	// Sai do estado atual
-	// Garante que a detecção de 90º não é um falso positivo
+	// Garante que a detecção de 90º não é um falso positivo e se não foi uma flutuação
 	if(estado != 4){
-		if (gyro > gyroV[0])
+		// Entra na área branca para testar se não é uma encruzilhada ou qualquer outra coisa
+		if (sairEstado(-1, 3) == 4){
+			// Caso ele encontre uma linha, ele continua reto (cuidado!!!!!!!!!!!!!!) (verificar em caso de erro)
 			return 0;
-		sairEstado(-1, 3);
+		}
 	}
-	// Se estiver fora da linha
+	// Quando estiver fora da linha
 	if(estado == 3){
 		read_line_sensor(1);
 		int erro;
-		// Vira um pouco para o lado contrário
+		// Vira um pouco para o lado contrário, para talvez aumentar o erro (testar sem)
 		turn(15, dir);
+		// Verifica se o valor da linha que ele seguiria via PID realmente corresponde ao lado que ele deve virar
 		bool testeL = dir? ( linha > SET_POINT? false : true ) : ( linha < SET_POINT? false : true);
 		if (testeL) {
+			// Caso seja o lado certo, ele corrige via PID
 			do {
 				print("VIRADA 90");
 				// Corrige até que o erro esteja dentro do definido
 				erro = PID(read_line_sensor(1), OFFSET/2, KP, SET_POINT);
 			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
+
 		}else{
+			// Caso o erro esteja do lado contrário, ele corrige com turn;
 			do {
 				print("VIRADA 90");
 				// Corrige até que o erro esteja dentro do definido
@@ -231,10 +248,10 @@ int grade90(bool dir){
 	}
 	read_line_sensor(1);
 	int erro = read_line_sensor(1) - SET_POINT;
+	// Eu não sei porque ele entra aqui, mas é relevante
 	if(erro > 20 || erro < -20){
 		int erro;
-		// Anda para trás
-		//walk(-15,22);
+		// Caso ele esteja parcialmente na linha
 		if(estado != 3){
 			do {
 				print("CORRIGINDO PARA TRÁS");
@@ -244,30 +261,25 @@ int grade90(bool dir){
 		}
 		else{
 			while(estado == 3){
-				print("BACKWARDS");
-				read_line_sensor(1);
-				// Anda para trás
-				// Anda para frente, dado o multiplicador
-				setSpeed(20, 20);
-				// Corrige novamente
-
-			}
-			if (estado = 4) {
-
-			} else {
+				// Marcador
+				// Verifica se o valor da linha que ele seguiria via PID realmente corresponde ao lado que ele deve virar
 				bool testeL = dir? ( linha > SET_POINT? false : true ) : ( linha < SET_POINT? false : true);
 				if (testeL) {
+					// Caso seja o lado certo, ele corrige via PID
 					do {
 						print("VIRADA 90");
 						// Corrige até que o erro esteja dentro do definido
 						erro = PID(read_line_sensor(1), OFFSET/2, KP, SET_POINT);
 					}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
+
 				}else{
-					do {
-						print("VIRADA 90");
-						// Corrige até que o erro esteja dentro do definido
-						turn(1, !dir);
-					}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
+					// Substitua o marcador com o conteudo abaixo se der tudo errado
+
+					print("BACKWARDS");
+					read_line_sensor(1);
+					// Anda para trás
+					setSpeed(20, 20);
+					// Corrige novamente
 				}
 			}
 		}
@@ -309,8 +321,10 @@ int heuristica(int cor){
 * @param | [int] range | Alcançe mínimo para ativar o desvio
 */
 int obstaculo(int range){
+	// Checa se algum obstáculo já foi superado
 	if (obst)
 		return 0;
+	// Verifica se está na rampa
 	if (garantiaRampa > 100)
 		return 0;
 	// Checa pela colisão
@@ -323,6 +337,8 @@ int obstaculo(int range){
 			distanceInf = getIRDistance(infraR);
 		}
 		read_line_sensor(1);
+
+		// Verifica se o obstáculo não foi encontrado no momento errado
 		if (estado == 3){
 			walk(-TURN_SPEED_90, TURN_TIME_90*4);
 			turn(15, true);
@@ -330,14 +346,19 @@ int obstaculo(int range){
 			}else{
 			walk(-TURN_SPEED_90, TURN_TIME_90*2);
 		}
+		// Corrige
 		corrigir(5);
 		// Vira 90° para direita
 		turning(false);
+		// Anda para frente
 		walk(TURN_SPEED_90, TURN_TIME_90*10);
+		// Vira 90° para esquerda
 		turning(true);
+		// Anda para frente
 		walk(TURN_SPEED_90, TURN_TIME_90*18);
+		// Vira 90° para esquerda
 		turning(true);
-		//stopUs();
+		// Anda para frente até achar a linha
 		read_line_sensor(1);
 		while(estado == 3){
 			read_line_sensor(1);
@@ -345,10 +366,11 @@ int obstaculo(int range){
 			motor[motorB] = - 20;
 			displayCenteredBigTextLine(1, "PROCURANDO A LINHA");
 		}
+		// Anda um pouco mais pra frente
 		walk(TURN_SPEED_90, TURN_TIME_90*2);
+		// Vira para direita
 		turning(false);
-		//corrigir(5);
-		// Anda para trás
+		// Anda para trás enquanto estiver fora
 		read_line_sensor(1);
 		if (estado == 3) {
 			while	(estado == 3){
@@ -356,11 +378,14 @@ int obstaculo(int range){
 				setSpeed(30, 30);
 			}
 		} else {
+			// Ou só anda para trás mesmo
 			walk(-TURN_SPEED_90, TURN_TIME_90*4);
 		}
+		// Fica indo para trás e para frente para garantir que ele não fique fora da linha
 		while (estado == 3){
 			if (estado == 3) {
 				int c = 0;
+				// Vai pra trás procurando a linha até um contador superar 1000
 				while	(estado == 3){
 					c++;
 					read_line_sensor(1);
@@ -371,6 +396,7 @@ int obstaculo(int range){
 			}
 			if (estado == 3) {
 				int c = 0;
+				// Vai pra frente procurando a linha até um contador superar 2000
 				while	(estado == 3){
 					c++;
 					read_line_sensor(1);
@@ -381,58 +407,12 @@ int obstaculo(int range){
 			}
 		}
 		corrigir(5);
+		// Diz que o obstáculo já foi superado
 		obst = true;
 		return 1;
 	}
 	return 0;
 }
-/*int obstaculo(int range){
-if (obst)
-return 0;
-// Checa pela colisão
-if(getIRDistance(infraR) < range){
-//Anda até ficar na distância certa em relação ao obstáculo
-int distanceInf = getIRDistance(infraR);
-while(distanceInf - SET_POINT_INFRA > 1 || distanceInf - SET_POINT_INFRA < -1){
-motor[motorA] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
-motor[motorB] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
-distanceInf = getIRDistance(infraR);
-}
-read_line_sensor(1);
-if (estado == 3){
-walk(-TURN_SPEED_90, TURN_TIME_90*4);
-return 0;
-}else{
-walk(-TURN_SPEED_90, TURN_TIME_90*2);
-}
-corrigir(5);
-// Vira 90° para direita
-turning(false);
-//stopUs();
-read_line_sensor(1);
-int contador = 0;
-while(contador < 80){
-read_line_sensor(1);
-motor[motorA] = - 20;
-motor[motorB] = - 45;
-contador++;
-}
-read_line_sensor(1);
-while(estado != 4){
-read_line_sensor(1);
-motor[motorA] = - 20;
-motor[motorB] = - 45;
-}
-turning(false);
-//corrigir(5);
-// Anda para trás
-walk(-TURN_SPEED_90, TURN_TIME_90*4);
-obst = true;
-return 1;
-}
-return 0;
-}
-*/
 /**
 * Realiza as funções de Line Following
 * que são interpretadas na função principal
@@ -490,4 +470,37 @@ int checkRampa(void){
 		return 1;
 	}
 	return 0;
+}
+
+// Ciclo de resgate final
+
+void cicloResgate(){
+	// Variável que armazena tanto se a bola foi capturada quanto se o receptáculo foi encontrado
+	bool search = false;
+	// Loop que executará até a finalização do código
+	while(1){
+		// Loop de procura
+		while((!search)){
+			i2c_msg(8, 8, 13, 0, 0, 0, 300);
+			displayCenteredBigTextLine(1, "RESGATE");
+			displayCenteredBigTextLine(5, "%d | %d", estado, linha);
+			// Verifica se a bolinha foi encontrada e trata a informação
+			search = searchBall();
+		}
+		// Vai para trás para se afastar da parede
+		back();
+		// Procura pelo receptáculo
+		if(search){
+			search = false;
+			while(!search){
+				i2c_msg(8, 8, 13, 0, 0, 0, 300);
+				displayCenteredBigTextLine(1, "RECEPT");
+				displayCenteredBigTextLine(5, "%d", replyMsg[5]);
+				search = searchRecipe();
+			}
+		}
+		search = false;
+		// Vai para trás para se afastar da parede
+		back();
+	}
 }

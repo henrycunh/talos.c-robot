@@ -32,12 +32,12 @@
 #define A_MOTOR_OFFSET 1 // Ajuste do offset no motor A
 #define B_MOTOR_OFFSET 1 // Ajuste do offset no motor B
 #define LF_MSG 1 // Mensagem I2C para ficar no modo de seguir linha
-#define DISTANCE 30 //Distância de entrada
-#define ENTRADA_ERRO 10
-#define UPVEL 30
-#define DWVEL -30
-#define SETPOINTIR 1
-#define KPIR 1
+#define DISTANCE 30 // Distância de entrada
+#define UPVEL 30 // Velocidade de subida da garra
+#define DWVEL -30 // Velocidade de descida da garra
+#define SETPOINTIR 1 // Distância que o robô procura ao entrar na arena
+#define KPIR 1 // Constante proporcional da aproximação do robô
+#define KPHOUGH 1 // Constante proporcional do movimento relativo do robô em relação ao valor da vítima
 
 long timer = 0;
 bool resgate = false; // Armazena o estado do resgate
@@ -68,55 +68,35 @@ byte sendMsg[10]; // Armazena a mensagem a ser enviada
 
 // RESGATE
 void resgateMode(void){
-	/*walk(TURN_SPEED_90, TURN_TIME_90*10);
-	//turn(25, 0);
+	// Anda para frente para se estabilizar na parte de cima da arena
+	walk(TURN_SPEED_90, TURN_TIME_90*10);
+	// Captura o valor do sensor Infravermelho
 	int distanceInf = getIRDistance(infraR);
+	// Se aproxima da parede até alcançar a metade da sala
 	for(int a = 0; a < 5000; a++){
  		motor[motorA] = - ((distanceInf	- 25) * KP * 4);
  		motor[motorB] = - ((distanceInf	- 25) * KP * 4);
  		distanceInf = getIRDistance(infraR);
   }
   setSpeed(0, 0);
+  // Vira para se ajustar no outro eixo da sala
   turning(false);
   setSpeed(0, 0);
-	//walk(TURN_SPEED_90, TURN_TIME_90*20);
 	i2c_msg(2, 8, 13, 0, 0, 0, 30);
-	//entry();
+	// Fecha a garra
 	closeG();
+	// Desce a garra para ajusta-la ao nível do chão
 	cDown();
+	// Sobe a garra para desobstruir a visão da câmera
 	parseUP();
+	// Se aproxima da parede até alcançar a metade transversal da sala
 	for(int a = 0; a < 5000; a++){
  		motor[motorA] = - ((distanceInf	- 25) * KP * 4);
  		motor[motorB] = - ((distanceInf	- 25) * KP * 4);
  		distanceInf = getIRDistance(infraR);
-  }*/
-	bool search = false;
-
-	while(1){
-		back();
-		resetMotorEncoder(motorA);
-		while((!search)){
-			i2c_msg(8, 8, 13, 0, 0, 0, 300);
-			displayCenteredBigTextLine(1, "RESGATE");
-			displayCenteredBigTextLine(5, "%d | %d", estado, linha);
-			search = searchBall();
-		}
-		back();
-
-		if(search){
-			search = false;
-			while(!search){
-				i2c_msg(8, 8, 13, 0, 0, 0, 300);
-				displayCenteredBigTextLine(1, "RECEPT");
-				displayCenteredBigTextLine(5, "%d", replyMsg[5]);
-				search = searchRecipe();
-			}
-		}
-		search = false;
-	}
-	//regate done
-	stopUs();
-
+  }
+	// Função que executará até a finalização do código
+	cicloResgate();
 }
 
 // ESCOPO PRINCIPAL
@@ -124,13 +104,9 @@ task main
 {
 	// Manda mensagem para o Arduino sair do modo de resgate
 	i2c_msg(2, 8, 1, 0, 0, 0, 30);
-	while(0)
-		setSpeed(-20, -20);
-	while(1){
-		resgateMode();
-
-		//stopUs();
-
+	while(!getButtonPress(2)){
+		if(getButtonPress(1)
+			resgateMode();
 	}
 	// Calibra o limiar de branco
 	calibrateThresh();

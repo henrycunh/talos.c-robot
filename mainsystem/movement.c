@@ -19,6 +19,7 @@ void setSpeed(int a, int b){
 	motor[motorB] = b * B_MOTOR_OFFSET;
 }
 
+// Move a garra verticalmente
 void moveY(int count, int vel){
 
 	for(int a = 0; a < count; a++){
@@ -27,40 +28,49 @@ void moveY(int count, int vel){
 	motor[motorD] = 0;
 }
 
+// Vai para frente
 void front(float vel){
 	motor[motorA] = -vel;
 	motor[motorB] = -vel;
 }
 
+// Desce completamente a garra
 void cDown(){
 	moveY(30000, DWVEL)
 }
 
+// Espera por algum botão
 void wB(){
 	while(getButtonPress(2) == 0){}
 }
 
+// Levanta a garra
 void parseUP(){
 	moveY(28000, UPVEL)
 }
 
+// Abaixa a garra
 void parseDW(){
 	moveY(26000, DWVEL)
 }
 
+// Fecha completamente a garra
 void closeG(){
 	for(int a = 0; a < 20000; a++){
 		motor[motorC] = -60;
 	}
 }
 
+// Abre completamente a garra
 void openG(){
 	for(int a = 0; a < 20000; a++){
 		motor[motorC] = 60;
 	}
 }
+
+// Anda uma constate para trás
 void back(){
-	for(int a = 0; a < 15000; a++){
+	for(int a = 0; a < 10000; a++){
 		motor[motorA] = 30;
 		motor[motorB] = 30;
 	}
@@ -68,11 +78,23 @@ void back(){
 	motor[motorB] = 0;
 }
 
+// Anda de maneira configurável para trás
+void backin(int x){
+	for(int a = 0; a < x; a++){
+		motor[motorA] = 30;
+		motor[motorB] = 30;
+	}
+	motor[motorA] = 0;
+	motor[motorB] = 0;
+}
+
+// Para os motores
 void stopM(){
 	motor[motorA] = 0;
 	motor[motorB] = 0;
 }
 
+// Se aproxima muito, mas controladamente da parede
 int PIDaprox(){
 	int erro = getIRDistance(S3) - SETPOINTIR;
 	int count = 0;
@@ -100,15 +122,6 @@ void stopUs(){
 	}
 }
 
-void gotcha(){
-	closeG();
-	cDown();
-	openG();
-	PIDAprox();
-	closeG();
-	back();
-	parseUP();
-}
 /**
  * Faz com o que o robô ande para frente
  * uma determinada quantidade de rotações
