@@ -42,7 +42,7 @@ RECEPT_DETECTED = False
 for i in range(1, 436):
     fn = "record/frame (%d).jpg" % i
     image = cv2.imread(fn)
-
+	
     # Converte de colorido para GS
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
