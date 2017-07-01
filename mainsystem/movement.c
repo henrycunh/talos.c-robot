@@ -166,28 +166,6 @@ void turn(float value, bool direction){
 	}
 }
 
-/**
- * Faz com que o robô vire uma determinada quantidade
- * de unidades, em uma direção
- * --------------------------------------------------------------------
- * @param | [float] value    | Valor adimensional da angulação da curva
- * @param | [bool] direction | Direção da voltar
- */
-void virai(float value, bool direction,int vel){
-	print("TURN");
-	value = map(value, 0, 180, 0, 1320);
-	int a = getMotorEncoder(motorA);
-	if(direction){
-		while(getMotorEncoder(motorA) < a + value){
-			setSpeed(vel, -vel);
-		}
-	}	else {
-		while(getMotorEncoder(motorA) + value > a ){
-			setSpeed(-vel, vel);
-		}
-	}
-}
-
 //Dá uma reboladinha
 void rebolation(){
 	turn(5, true);

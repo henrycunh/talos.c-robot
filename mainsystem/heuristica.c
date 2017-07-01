@@ -35,8 +35,9 @@ int gap(){
 		auxiliar = 1;
 		return 0;
 	}
-	// Se não foi, anda um pouco para trás
+	// Se não foi, anda um pouco para trás (VEJA ISSO AGORA)
 	while(estado == 3){
+		read_line_sensor(1);
 		setSpeed(20, 20);
 	}
 	if(estado != 4)
@@ -46,7 +47,17 @@ int gap(){
 		corrigir(6);
 	}
 	if(estado != 4) return 0;
-	walk(20,80);
+	while(estado != 3){
+		if((estado == 1) || (estado == 2)){
+			return 0;
+		}
+		if ((linha > SET_POINT + 6) || (linha < SET_POINT - 6)){
+			return 0;
+		}
+		read_line_sensor(1);
+		setSpeed(-20, -20);
+	}
+	//walk(20,80);
 	// E enquanto estiver fora da linha
 	read_line_sensor(1);
 	while(estado == 3){
@@ -460,6 +471,7 @@ int obstaculo(int range){
 		//Anda até ficar na distância certa em relação ao obstáculo
 		int distanceInf = getIRDistance(infraR);
 		while(distanceInf - SET_POINT_INFRA > 1 || distanceInf - SET_POINT_INFRA < -1){
+			print("AJUSTANDO AO OBSTÁCULO");
 			motor[motorA] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
 			motor[motorB] = - ((distanceInf	- SET_POINT_INFRA) * KP * 2);
 			distanceInf = getIRDistance(infraR);
