@@ -3,11 +3,11 @@
 #pragma config(Sensor, S3,     infraR,         sensorEV3_IRSensor)
 #pragma config(Sensor, S4,     colorB,         sensorEV3_Color, modeEV3Color_Color)
 /** CONFIGURAÇÃO DOS SENSORES
- * S1 => Sensor de Cor Direito
- * S2 => Sensor do I2C
- * S3 => Sensor Infravermelho
- * S4 => Sensor de Cor Esquerdo
- */
+* S1 => Sensor de Cor Direito
+* S2 => Sensor do I2C
+* S3 => Sensor Infravermelho
+* S4 => Sensor de Cor Esquerdo
+*/
 
 // CONSTANTES GLOBAIS
 #define ARDUINO_ADDRESS 0x08 // Endereço do Arduino
@@ -23,7 +23,7 @@
 #define TURN_ERRO_K 8 // Erro permitido na virada da curva de 90°
 #define IMAGE_KP 0.2 // Constante proporcional da busca no resgate
 #define TIMER_ESPERA 1000000 // Tempo que o robô esperará parado depois de encontrar alguma bola e perde-la
-#define IMAGE_SETPOINT 60 // Ponto intermediário da busca no resgate
+#define IMAGE_SETPOINT 80 // Ponto intermediário da busca no resgate
 #define IMAGE_ERRO 10 // Erro tolerável de alinhamento em relação à bolinha
 #define IMAGE_OFFSET 4 // Velocidade de aproximação no resgate
 #define COLOR_ERRO 6 // Erro permitido da cor durante a calibração
@@ -34,16 +34,17 @@
 #define LF_MSG 1 // Mensagem I2C para ficar no modo de seguir linha
 #define DISTANCE 30 // Distância de entrada
 #define UPVEL 30 // Velocidade de subida da garra
-#define DWVEL -30 // Velocidade de descida da garra
+#define DWVEL -40 // Velocidade de descida da garra
 #define SETPOINTIR 1 // Distância que o robô procura ao entrar na arena
-#define KPIR 1 // Constante proporcional da aproximação do robô
-#define KPHOUGH 1 // Constante proporcional do movimento relativo do robô em relação ao valor da vítima
+#define KPIR 0.5 // Constante proporcional da aproximação do robô
+#define KPHOUGH 0.2 // Constante proporcional do movimento relativo do robô em relação ao valor da vítima
 
 long timer = 0;
 bool resgate = false; // Armazena o estado do resgate
 bool corrigido = false; // Armazena o estado da correção
 bool offRoad = false; // Armazena o estado do robô em relação ao terreno
 bool obst = false // Armazena se o obstaculo já foi superado
+bool ball = false;
 int limiarWhite[2][3]; // Armazena os limiares da cor branca
 int linha; // Armazena posição do sensor QTR8-A | Lim: 0 - 127
 int estado; // Armazena estado do sensor | {1, 2, 3, 4}
@@ -58,6 +59,7 @@ long coresB[3]; // Armazena as cores do sensor de cor esquerdo
 TI2CStatus mI2CStatus; // Armazena o status do sensor
 byte replyMsg[10]; // Armazena a resposta do I2C
 byte sendMsg[10]; // Armazena a mensagem a ser enviada
+int auxiliar = 0;
 
 // INCLUINDO BIBLIOTECAS
 #include "utils.c"
@@ -68,33 +70,11 @@ byte sendMsg[10]; // Armazena a mensagem a ser enviada
 
 // RESGATE
 void resgateMode(void){
-	// Anda para frente para se estabilizar na parte de cima da arena
-	walk(TURN_SPEED_90, TURN_TIME_90*10);
-	// Captura o valor do sensor Infravermelho
-	int distanceInf = getIRDistance(infraR);
-	// Se aproxima da parede até alcançar a metade da sala
-	for(int a = 0; a < 5000; a++){
- 		motor[motorA] = - ((distanceInf	- 25) * KP * 4);
- 		motor[motorB] = - ((distanceInf	- 25) * KP * 4);
- 		distanceInf = getIRDistance(infraR);
-  }
-  setSpeed(0, 0);
-  // Vira para se ajustar no outro eixo da sala
-  turning(false);
-  setSpeed(0, 0);
+	PIDaprox();
+	ajuste();
 	i2c_msg(2, 8, 13, 0, 0, 0, 30);
 	// Fecha a garra
 	closeG();
-	// Desce a garra para ajusta-la ao nível do chão
-	cDown();
-	// Sobe a garra para desobstruir a visão da câmera
-	parseUP();
-	// Se aproxima da parede até alcançar a metade transversal da sala
-	for(int a = 0; a < 5000; a++){
- 		motor[motorA] = - ((distanceInf	- 25) * KP * 4);
- 		motor[motorB] = - ((distanceInf	- 25) * KP * 4);
- 		distanceInf = getIRDistance(infraR);
-  }
 	// Função que executará até a finalização do código
 	cicloResgate();
 }
@@ -102,37 +82,51 @@ void resgateMode(void){
 // ESCOPO PRINCIPAL
 task main
 {
+	//ajuste();
 	// Manda mensagem para o Arduino sair do modo de resgate
 	i2c_msg(2, 8, 1, 0, 0, 0, 30);
 	while(!getButtonPress(2)){
 		if(getButtonPress(1)
 			resgateMode();
 	}
+	wait1Msec(1000);
 	// Calibra o limiar de branco
 	calibrateThresh();
 	// Loop principal
+	auxiliar = 0;
+	garantiaRampa = 0;
 	while(1){
-
+		if(auxiliar == 1){
+			resgateMode();
+		}
+		if(garantiaRampa < 0){
+			garantiaRampa = 0;
+		}
 		lineFollowing();
-			// Caso esteja na rampa
-			if(checkRampa()){
-				garantiaRampa++;
-				continue;
-			}
-			if(resgateCount > 0){
-				if (estado != 4)
-					walk(TURN_SPEED_90, TURN_TIME_90/2);
-				read_line_sensor(1);
-				if(estado == 3)
-					resgateMode();
-					//resgateCount = 0;
-			}
-			// Executa a função de seguir linhas
-
-			if(garantiaRampa > 100){
-
+		// Caso esteja na rampa
+		if(garantiaRampa > 100){
+			print("RAMPA GARANTIDA");
 			resgateCount++;
-				displayCenteredBigTextLine(5, "RAMPA: %d | %d", garantiaRampa, resgateCount);
+			displayCenteredBigTextLine(5, "RAMPA: %d | %d", garantiaRampa, resgateCount);
+		}
+		if(checkRampa()){
+			print("RAMPA CHECADA");
+			garantiaRampa++;
+			continue;
+		}
+		garantiaRampa--;
+		if(resgateCount > 0){
+			if (estado != 4){
+				print("TOU PRESO AQUI");
+				walk(TURN_SPEED_90, TURN_TIME_90/2);
 			}
+			read_line_sensor(1);
+			if(estado == 3){
+				print("TOU PRESO AQUI 2");
+				resgateMode();
+			//resgateCount = 0;
+			}
+		}
+		// Executa a função de seguir linhas
 	}
 }

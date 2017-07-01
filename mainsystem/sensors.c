@@ -20,6 +20,7 @@ int read_line_sensor(byte byte1){
  */
 int get_ultra_value(){
 	i2c_msg(8,3,10,0,0,0,100);
+	return 0;
 }
 
 
@@ -29,6 +30,8 @@ int get_ultra_value(){
  * um limiar unificado no ?nicio da competi??o
  */
 void calibrateThresh(){
+	gyroV[0] = 0;
+	gyroV[1] = 0;
 	while(!getButtonPress(buttonEnter)){
 		// Pegando cores do sensor esquerdo
 		long coresB[3];
@@ -50,12 +53,10 @@ void calibrateThresh(){
 			}
 		}
 		i2c_msg(5, 8, 1, 0, 0, 0, 30);
-		if (gyro > 50){
-			gyroV[0] = gyro + 30;
-			gyroV[1] = gyro - 30;
-		}else{
-			gyroV[0] = gyro + 15;
-			gyroV[1] = gyro - 15;
+		if (gyro > gyroV[0]){
+			gyroV[0] = gyro;
+		}else if(gyro < gyroV[1]){
+			gyroV[1] = gyro;
 		}
 
 	}

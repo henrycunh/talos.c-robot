@@ -36,7 +36,7 @@ void front(float vel){
 
 // Desce completamente a garra
 void cDown(){
-	moveY(30000, DWVEL)
+	moveY(32000, DWVEL)
 }
 
 // Espera por algum botão
@@ -46,12 +46,12 @@ void wB(){
 
 // Levanta a garra
 void parseUP(){
-	moveY(28000, UPVEL)
+	moveY(36000, UPVEL)
 }
 
 // Abaixa a garra
 void parseDW(){
-	moveY(26000, DWVEL)
+	moveY(32000, DWVEL)
 }
 
 // Fecha completamente a garra
@@ -98,12 +98,12 @@ void stopM(){
 int PIDaprox(){
 	int erro = getIRDistance(S3) - SETPOINTIR;
 	int count = 0;
-	while(erro > 4 || erro < -4){
+	while(erro > 5 || erro < -5){
 		displayCenteredBigTextLine(1,"%d | %d",erro, getIRDistance(S3));
 		front(erro*KPIR);
 		erro = getIRDistance(S3) - SETPOINTIR;
 		count++;
-		if (count > 5000){
+		if (count > 10000){
 			stopM();
 			return 0;
 		}
@@ -166,6 +166,33 @@ void turn(float value, bool direction){
 	}
 }
 
+/**
+ * Faz com que o robô vire uma determinada quantidade
+ * de unidades, em uma direção
+ * --------------------------------------------------------------------
+ * @param | [float] value    | Valor adimensional da angulação da curva
+ * @param | [bool] direction | Direção da voltar
+ */
+void virai(float value, bool direction,int vel){
+	print("TURN");
+	value = map(value, 0, 180, 0, 1320);
+	int a = getMotorEncoder(motorA);
+	if(direction){
+		while(getMotorEncoder(motorA) < a + value){
+			setSpeed(vel, -vel);
+		}
+	}	else {
+		while(getMotorEncoder(motorA) + value > a ){
+			setSpeed(-vel, vel);
+		}
+	}
+}
+
+//Dá uma reboladinha
+void rebolation(){
+	turn(5, true);
+	turn(5, false);
+}
 
 /**
  * Função que executa o ajuste PID

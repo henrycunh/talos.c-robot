@@ -13,13 +13,14 @@
 * -----------------------------------------------------------
 * @param | [int] limiar | Limiar a ser atingido pela correção
 */
-void corrigir(int limiar){
+int corrigir(int limiar){
 	print("CORRIGINDO");
 	int erro = read_line_sensor(1) - SET_POINT;
 	while(erro > limiar){
 		erro = PID(read_line_sensor(1), OFFSET/3, KP*2, SET_POINT);
 	}
 	corrigido = true;
+	return 0;
 }
 
 
@@ -29,12 +30,22 @@ void corrigir(int limiar){
 * frente até que o estado mude para o que representa
 * uma linha dentro dos limites do sensor
 */
-void gap(){
+int gap(){
+	if(garantiaRampa > 100){
+		auxiliar = 1;
+		return 0;
+	}
 	// Se não foi, anda um pouco para trás
-	walk(-20, 80);
+	while(estado == 3){
+		setSpeed(20, 20);
+	}
+	if(estado != 4)
+		return 0;
 	// E corrige
-	corrigir(6);
-	if(estado != 4) return;
+	if(estado == 4){
+		corrigir(6);
+	}
+	if(estado != 4) return 0;
 	walk(20,80);
 	// E enquanto estiver fora da linha
 	read_line_sensor(1);
@@ -44,8 +55,8 @@ void gap(){
 		read_line_sensor(1);
 		print("G A P");
 	}
+	return 0;
 }
-
 // Procura a bolinha
 int searchBall(){
 	static bool lado = true;
@@ -54,9 +65,13 @@ int searchBall(){
 		// Para o robô
 		setSpeed(0,0);
 		// Testa a direção do robô
-		bool turning = linha - IMAGE_SETPOINT > 0 ? true : false;
+		bool turning = (( linha - IMAGE_SETPOINT ) > 0 ) ? true : false;
+		int erroDis = linha - IMAGE_SETPOINT;
+		if (erroDis < 0){
+			erroDis = erroDis * -1;
+		}
 		// Vira em função da distância da bolinha
-		turn((abs(linha - IMAGE_SETPOINT)*KPHOUGH), turning);
+		turn((erroDis*KPHOUGH), !turning);
 		// Para o robÔ
 		setSpeed(0,0);
 		// Vai um pouco para trás
@@ -64,6 +79,7 @@ int searchBall(){
 		// Fecha a garra
 		closeG();
 		// Levanta a garra
+		cDown();
 		cDown();
 		// Fecha a garra
 		openG();
@@ -75,21 +91,112 @@ int searchBall(){
 		backin(4000);
 		// Levanta a bolinha
 		parseUP();
+		parseUP();
+		ball = true;
 		return 1;
-	// Caso a bolinha não seja detectada ele vira para o ultimo lado que estava (verificar)
-	} else if (linha == 0){
-		if (lado) {
-			setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
-		} else {
-			setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
-		}
-	}else if (linha == 127){
+		// Caso a bolinha não seja detectada ele vira para o ultimo lado que estava (verificar)
+		} else if (linha == 0){
+		int dist = getIRDistance(infraR);
+		int erroDi = - dist + 22;
+		setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
+		}else if (linha == 127){
+		int dist = getIRDistance(infraR);
+		int erroDi = - dist + 22;
 		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
-		lado = false;
 	}
 	return 0;
 }
-
+// Ajuste
+bool ajuste(){
+	turn(TURN_TIME_90/4, false);
+	int dist = getIRDistance(infraR);
+	turn(TURN_TIME_90/4, false);
+	if((getIRDistance(infraR) - dist) > 0){
+		do {
+			dist = getIRDistance(infraR);
+			turn(TURN_TIME_90/16, false);
+			if (!ball){
+				searchBall();
+			}
+		} while((getIRDistance(infraR) - dist) > 0);
+		} else {
+		do {
+			dist = getIRDistance(infraR);
+			turn(TURN_TIME_90/16, false);
+			if (!ball){
+				searchBall();
+			}
+		} while((getIRDistance(infraR) - dist) < 0);
+	}
+	if((getIRDistance(infraR) - dist) > 0){
+		do {
+			dist = getIRDistance(infraR);
+			turn(TURN_TIME_90/16, false);
+			if (!ball){
+				searchBall();
+			}
+		} while((getIRDistance(infraR) - dist) > 0);
+		} else {
+		do {
+			dist = getIRDistance(infraR);
+			turn(TURN_TIME_90/16, false);
+			if (!ball){
+				searchBall();
+			}
+		} while((getIRDistance(infraR) - dist) < 0);
+	}
+	for(int a = 0; a < 10000; a++){
+		motor[motorA] = - ((dist	- 25) * KP * 2);
+		motor[motorB] = - ((dist	- 25) * KP * 2);
+		dist = getIRDistance(infraR);
+		if (!ball){
+			searchBall();
+		}
+	}
+	if((getIRDistance(infraR) - dist) > 0){
+		do {
+			dist = getIRDistance(infraR);
+			turn(TURN_TIME_90/16, true);
+			if (!ball){
+				searchBall();
+			}
+		} while((getIRDistance(infraR) - dist) > 0);
+		} else {
+		do {
+			dist = getIRDistance(infraR);
+			turn(TURN_TIME_90/16, true);
+			if (!ball){
+				searchBall();
+			}
+		} while((getIRDistance(infraR) - dist) < 0);
+	}
+	if((getIRDistance(infraR) - dist) > 0){
+		do {
+			dist = getIRDistance(infraR);
+			turn(TURN_TIME_90/16, true);
+			if (!ball){
+				searchBall();
+			}
+		} while((getIRDistance(infraR) - dist) > 0);
+		} else {
+		do {
+			dist = getIRDistance(infraR);
+			turn(TURN_TIME_90/16, true);
+			if (!ball){
+				searchBall();
+			}
+		} while((getIRDistance(infraR) - dist) < 0);
+	}
+	for(int a = 0; a < 10000; a++){
+		motor[motorA] = - ((dist	- 25) * KP * 2);
+		motor[motorB] = - ((dist	- 25) * KP * 2);
+		if (!ball){
+			searchBall();
+		}
+		dist = getIRDistance(infraR);
+	}
+	return true;
+}
 // Procura o receptáculo
 int searchRecipe(){
 	// Verifica se o receptáculo está na posição certa
@@ -99,24 +206,36 @@ int searchRecipe(){
 		int distanceInf = 0;
 		// Se aproxima do receptáculo via PID
 		for(int a = 0; a < 5000; a++){
- 			motor[motorA] = - ((distanceInf	- 20) * KP * 4);
- 			motor[motorB] = - ((distanceInf	- 20) * KP * 4);
- 			distanceInf = getIRDistance(infraR);
-  	}
+			distanceInf = getIRDistance(infraR);
+			if(distanceInf < 10) {
+				for(int a = 0; a < 5000; a++){
+					motor[motorA] = -30;
+					motor[motorB] = -30;
+				}
+				} else {
+				motor[motorA] = - ((distanceInf	- 20) * KP * 4);
+				motor[motorB] = - ((distanceInf	- 20) * KP * 4);
+			}
+		}
+		openG();
 		// Desce a garra
-		parseDW();
+		cDown();
 		// Abre a garra
 		openG();
-		// Sobe a garra
-		parseUP();
+		back();
+		front(40);
+		back();
+		//rebolation();
 		// Fecha a garra
 		closeG();
+		// Sobe a garra
+		parseUP();
 		return 1;
-	// Caso o receptáculo não esteja no lugar certo ele se move na direção correta
-	} else if (replyMsg[5] > 50){
-		setSpeed(IMAGE_OFFSET, -IMAGE_OFFSET);
-	} else {
-		setSpeed(-IMAGE_OFFSET, IMAGE_OFFSET);
+		// Caso o receptáculo não esteja no lugar certo ele se move na direção correta
+		} else if (replyMsg[5] > 50){
+		setSpeed(IMAGE_OFFSET * 2, -IMAGE_OFFSET * 2);
+		} else {
+		setSpeed(-IMAGE_OFFSET * 2, IMAGE_OFFSET * 2);
 	}
 	return 0;
 }
@@ -146,8 +265,14 @@ void greenTurn(bool side){
 	print("GREEN TURN");
 	walk(TURN_SPEED_90, TURN_TIME_90);
 	turn(50, side);
+	int cor = read_color_sensor();
 	walk(TURN_SPEED_90, TURN_TIME_90/2);
-	corrigir(8);
+	read_line_sensor(1);
+	if(estado != 3){
+		corrigir(8);
+		}else{
+		turn(17, !side);
+	}
 }
 
 /**
@@ -212,6 +337,8 @@ int grade90(bool dir){
 	// Garante que não está na rampa
 	if (gyro > gyroV[0])
 		return 0;
+	if (garantiaRampa > 100)
+		return 0;
 	print("GRADE 90");
 	// Garante que a detecção de 90º não é um falso positivo e se não foi uma flutuação
 	if(estado != 4){
@@ -226,7 +353,7 @@ int grade90(bool dir){
 		read_line_sensor(1);
 		int erro;
 		// Vira um pouco para o lado contrário, para talvez aumentar o erro (testar sem)
-		turn(15, dir);
+		//turn(15, dir);
 		// Verifica se o valor da linha que ele seguiria via PID realmente corresponde ao lado que ele deve virar
 		bool testeL = dir? ( linha > SET_POINT? false : true ) : ( linha < SET_POINT? false : true);
 		if (testeL) {
@@ -237,7 +364,7 @@ int grade90(bool dir){
 				erro = PID(read_line_sensor(1), OFFSET/2, KP, SET_POINT);
 			}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
 
-		}else{
+			}else{
 			// Caso o erro esteja do lado contrário, ele corrige com turn;
 			do {
 				print("VIRADA 90");
@@ -272,7 +399,7 @@ int grade90(bool dir){
 						erro = PID(read_line_sensor(1), OFFSET/2, KP, SET_POINT);
 					}	while (erro > TURN_ERRO_K || erro < -TURN_ERRO_K);
 
-				}else{
+					}else{
 					// Substitua o marcador com o conteudo abaixo se der tudo errado
 
 					print("BACKWARDS");
@@ -294,6 +421,7 @@ int grade90(bool dir){
 * @param | [int] cor | Cor a ser analisada
 */
 int heuristica(int cor){
+	read_line_sensor(1);
 	// Confere se o resgate foi ativado
 	if (resgate)
 		return 0;
@@ -377,7 +505,7 @@ int obstaculo(int range){
 				read_line_sensor(1);
 				setSpeed(30, 30);
 			}
-		} else {
+			} else {
 			// Ou só anda para trás mesmo
 			walk(-TURN_SPEED_90, TURN_TIME_90*4);
 		}
@@ -421,7 +549,6 @@ int lineFollowing(){
 	// Faz a leitura da linha e do verde
 	int sensor = read_line_sensor(1);
 	int cor = read_color_sensor();
-
 	// Checa pelo resgate
 	if (resgate)
 		return 0;
@@ -460,7 +587,7 @@ int lineFollowing(){
 */
 int checkRampa(void){
 	// Checa se o robô está no limite
-	if(gyro > gyroV[0] || gyro < gyroV[1]){
+	if(gyro > gyroV[0]){// || gyro < gyroV[1]){
 		// Executa o PID
 		int sensor = read_line_sensor(1);
 		int erro = PID(sensor, OFFSET, KP, SET_POINT);
@@ -475,20 +602,34 @@ int checkRampa(void){
 // Ciclo de resgate final
 
 void cicloResgate(){
+	int count = 0;
 	// Variável que armazena tanto se a bola foi capturada quanto se o receptáculo foi encontrado
 	bool search = false;
 	// Loop que executará até a finalização do código
 	while(1){
 		// Loop de procura
+		parseUP();
 		while((!search)){
+			count++;
+			if(count > 50){
+				for(int a = 0; a < 60; a++){
+					setSpeed(-20, -20);
+					if(searchBall()) break;
+				}
+				for(int a = 0; a < 60; a++){
+					setSpeed(20, 20);
+					if(searchBall()) break;
+				}
+				count = 0;
+			}
 			i2c_msg(8, 8, 13, 0, 0, 0, 300);
 			displayCenteredBigTextLine(1, "RESGATE");
 			displayCenteredBigTextLine(5, "%d | %d", estado, linha);
 			// Verifica se a bolinha foi encontrada e trata a informação
 			search = searchBall();
 		}
-		// Vai para trás para se afastar da parede
-		back();
+		parseUP();
+		ajuste();
 		// Procura pelo receptáculo
 		if(search){
 			search = false;
@@ -501,6 +642,7 @@ void cicloResgate(){
 		}
 		search = false;
 		// Vai para trás para se afastar da parede
-		back();
+		parseUP();
+		ajuste();
 	}
 }
